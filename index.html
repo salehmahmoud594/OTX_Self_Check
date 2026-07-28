@@ -35,6 +35,10 @@
       * {
         box-sizing: border-box;
       }
+      html {
+        overflow-x: hidden;
+        width: 100%;
+      }
       body {
         margin: 0;
         background: var(--bg);
@@ -42,6 +46,17 @@
         font-family: var(--sans);
         min-height: 100vh;
         padding-bottom: 120px;
+        overflow-x: hidden;
+        width: 100%;
+      }
+      .qb-card-top > div:first-child,
+      .qb-session summary > div:first-child,
+      .dash-card-top > div:first-child,
+      .topic-title-row > div:first-child,
+      .source-head-top > div:first-child,
+      .overall-top > h3,
+      .group-strip-top > span:first-child {
+        min-width: 0;
       }
       ::selection {
         background: var(--accent-glow);
@@ -1251,6 +1266,84 @@
         font-family: var(--mono);
       }
 
+      @media (max-width: 768px) {
+        .topbar {
+          padding: 16px 14px 10px;
+        }
+        .container {
+          padding: 14px 14px 10px;
+        }
+        .gemini-panel-inner {
+          margin: 0 14px 12px;
+          padding: 12px 14px;
+        }
+        h1 {
+          font-size: 16.5px;
+        }
+        .subtitle {
+          font-size: 11px;
+        }
+        .brand-mark {
+          width: 28px;
+          height: 28px;
+        }
+        .top-controls {
+          gap: 8px;
+        }
+        .search-box {
+          min-width: 100%;
+          order: -1;
+        }
+        .btn.small {
+          padding: 7px 11px;
+          font-size: 12px;
+        }
+
+        .tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 2px;
+          margin-inline: -14px;
+          padding-inline: 14px;
+        }
+        .tabs::-webkit-scrollbar {
+          display: none;
+        }
+        .tab {
+          white-space: nowrap;
+          flex-shrink: 0;
+          padding: 8px 13px;
+          font-size: 12.5px;
+        }
+
+        .quiz-bar-handle {
+          padding: 12px 14px;
+        }
+        .quiz-bar-handle span[style*="font-size:11px"] {
+          display: none;
+        }
+        .quiz-body {
+          padding: 0 14px 16px;
+        }
+
+        .dash-card {
+          padding: 14px 15px;
+        }
+        .qb-card {
+          padding: 12px 13px;
+        }
+        .qb-filter-row {
+          gap: 6px;
+        }
+        .qb-filter-btn {
+          padding: 6px 11px;
+          font-size: 11.5px;
+        }
+      }
+
       @media (max-width: 640px) {
         .topic-row {
           flex-wrap: wrap;
@@ -1263,6 +1356,41 @@
         }
         .status-btn {
           flex: 1;
+        }
+      }
+
+      @media (max-width: 420px) {
+        h1 {
+          font-size: 15px;
+        }
+        .topbar {
+          padding: 14px 12px 8px;
+        }
+        .container {
+          padding: 12px 12px 8px;
+        }
+        .tabs {
+          margin-inline: -12px;
+          padding-inline: 12px;
+        }
+        .btn.small {
+          padding: 6px 9px;
+          font-size: 11.5px;
+        }
+        .qb-status-row,
+        .status-col {
+          gap: 4px;
+        }
+        .qb-status-btn {
+          padding: 4px 8px;
+          font-size: 9.5px;
+        }
+        .qlog-summary,
+        .dash-grid {
+          grid-template-columns: 1fr;
+        }
+        .num-fields-row {
+          grid-template-columns: 1fr;
         }
       }
     </style>
