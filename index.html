@@ -782,12 +782,51 @@
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 14px 16px;
         margin-bottom: 12px;
+        overflow: hidden;
       }
       .session-card.draft {
         border-color: var(--accent);
         box-shadow: 0 0 0 1px var(--accent-glow);
+      }
+      .session-summary {
+        padding: 13px 16px;
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .session-summary::-webkit-details-marker {
+        display: none;
+      }
+      .session-summary::after {
+        content: "▾";
+        color: var(--muted);
+        font-size: 11px;
+        transition: transform 0.15s;
+        flex-shrink: 0;
+      }
+      details.session-card[open] .session-summary::after {
+        transform: rotate(180deg);
+      }
+      .session-summary-main {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        min-width: 0;
+        flex: 1;
+      }
+      .session-summary-date {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .session-body {
+        padding: 0 16px 16px;
       }
       .session-top {
         display: flex;
@@ -1176,6 +1215,32 @@
         border-color: var(--mastered);
         color: var(--mastered);
       }
+      .qb-filter-btn.active-src {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .qlog-controls-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .qlog-sort-select {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-family: var(--mono);
+        font-size: 12px;
+        outline: none;
+        cursor: pointer;
+      }
+      .qlog-sort-select:focus {
+        border-color: var(--accent);
+      }
       .num-fields-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1519,6 +1584,12 @@
           short: "OPX",
           core: false,
         },
+        hciptx: {
+          label: "HCIP TX Transcript",
+          file: "all_transcripts_combined.txt",
+          short: "TX-TR",
+          core: false,
+        },
       };
 
       const RAW = {
@@ -1750,6 +1821,123 @@
             "Advanced Troubleshooting & Maintenance",
             "Optical signal quality / performance degradation troubleshooting",
             "استكشاف وإصلاح مشكلات جودة الإشارة",
+          ],
+        ],
+        hciptx: [
+          [
+            "Hardware & Board Architecture (OSN 9800 Series)",
+            "Shelf Types & Power/Management Units (M24, PIU, EFI)",
+            "أنواع الشلفات ووحدات الطاقة (PIU) والإدارة (EFI)",
+          ],
+          [
+            "Hardware & Board Architecture (OSN 9800 Series)",
+            "General Service Processing (GSP) Board — Modes & Functions",
+            "بورد الخدمة العام: أوضاع التشغيل (Regenerator/Line/Tributary) ووظائفه",
+          ],
+          [
+            "Hardware & Board Architecture (OSN 9800 Series)",
+            "Transponder Card Types & Naming (TOM/TDX/TSC/TTX/TSX)",
+            "أنواع كروت الترانسبوندر وتسمياتها",
+          ],
+          [
+            "Optical Add/Drop & Routing (FOADM/ROADM)",
+            "FOADM — Fixed Optical Add-Drop Multiplexer (MR2/MR4/MR8)",
+            "الإضافة والإسقاط الضوئي الثابت وأنواعه",
+          ],
+          [
+            "Optical Add/Drop & Routing (FOADM/ROADM)",
+            "ROADM Types — Colorless / Colored / Directionless",
+            "أنواع الـROADM القابل لإعادة التشكيل",
+          ],
+          [
+            "Optical Add/Drop & Routing (FOADM/ROADM)",
+            "Electrical vs Optical Layer Grooming & Cross-Connection",
+            "التجميع الكهربائي مقابل الضوئي وطريقة كل منهما",
+          ],
+          [
+            "WDM System Commissioning",
+            "Commissioning Basics — Signal Flow & Reference Points",
+            "أساسيات التشغيل: تدفق الإشارة ونقاط القياس المرجعية",
+          ],
+          [
+            "WDM System Commissioning",
+            "Power Budget & Insertion Loss (Coherent vs Non-Coherent)",
+            "حساب ميزانية القدرة والفقد للأنظمة المترابطة وغير المترابطة",
+          ],
+          [
+            "WDM System Commissioning",
+            "NE Configuration — ID, IP Address, Name & Location",
+            "إعداد بيانات العقدة الأساسية عند التدشين",
+          ],
+          [
+            "Packet & IP Fundamentals for Transmission",
+            "IP Addressing & Subnetting Basics",
+            "أساسيات عنونة الـIP والتقسيم الفرعي",
+          ],
+          [
+            "Packet & IP Fundamentals for Transmission",
+            "OAM — Connectivity Verification (CV/FFD), Loopback & Traceroute",
+            "التحقق من الاتصال واستكشاف الأخطاء في شبكات الحزم",
+          ],
+          [
+            "Client-Side & Network Protection Scenarios",
+            "Client-Side Protection Scenarios (Dual Transponder vs Dual Tributary/Line)",
+            "سيناريوهات حماية جهة العميل: الترانسبوندر المزدوج مقابل الكروت المزدوجة",
+          ],
+          [
+            "Client-Side & Network Protection Scenarios",
+            "APS Protocol Detail — Tunnel & Pseudowire-Level (1+1 vs 1:1, Revertive)",
+            "بروتوكول الحماية التلقائي بالتفصيل: مستوى التونل والبسيدو واير، وأنماط السويتشنج",
+          ],
+          [
+            "Device & Site Maintenance",
+            "Board-Level Maintenance & Servicing Procedures",
+            "إجراءات صيانة البوردات",
+          ],
+          [
+            "Device & Site Maintenance",
+            "Routine Maintenance Checklist (Daily/Weekly Site Survey)",
+            "قائمة الصيانة الدورية للموقع (يومي/أسبوعي)",
+          ],
+          [
+            "Alarm Signal Flow & Troubleshooting",
+            "Alarm Signal Flow — Electrical Layer (OPU/ODU/OTU)",
+            "تدفق الإنذارات في الطبقة الكهربائية وربطها بالـOverheads",
+          ],
+          [
+            "Alarm Signal Flow & Troubleshooting",
+            "Alarm Signal Flow — Optical Layer (OCH/OMS/OTS)",
+            "تدفق الإنذارات في الطبقة الضوئية",
+          ],
+          [
+            "Alarm Signal Flow & Troubleshooting",
+            "WDM Troubleshooting Methodology & Case Studies",
+            "منهجية استكشاف الأخطاء وحالات عملية (Bit Error، تذبذب القدرة، أعطال الهاردوير)",
+          ],
+          [
+            "Network Management (NCE)",
+            "NCE / NMS Server — Remote Management & Login",
+            "إدارة الشبكة عن بعد عبر خادم الـNCE",
+          ],
+          [
+            "Network Management (NCE)",
+            "Alarm Troubleshooting & Performance Monitoring via NCE",
+            "استكشاف الإنذارات ومراقبة الأداء من خلال الـNCE",
+          ],
+          [
+            "Network Management (NCE)",
+            "NE Data Backup & Restoration",
+            "النسخ الاحتياطي واسترجاع بيانات العقدة",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "Non-Linear Optical Effects & Power Design Constraints",
+            "التأثيرات غير الخطية في الفايبر وتأثيرها على تصميم القدرة",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "Fiber Doctor — Fiber Line Monitoring (OTDR-based)",
+            "أداة مراقبة خط الفايبر: كشف الأعطال والتوهين والتشتت (أداة منفصلة عن Optical Doctor)",
           ],
         ],
         txn: [
@@ -2417,6 +2605,10 @@
         reviewedToday: { date: "", ids: [] },
       };
       let selected = new Set();
+      let openSessionIds = new Set(); // which Quiz Log session cards are expanded — UI-only, not persisted, survives re-renders via the 'toggle' listener below
+      let qlogSrcFilter = "all";
+      let qlogSort = "newest";
+      let qlogSearchQuery = "";
       let activeTab = "dashboard";
       let searchQuery = "";
       let editingId = null;
@@ -2552,6 +2744,43 @@
           updateStorageBanner();
         }, 250);
       }
+      /* Safety net for mobile: text fields (quiz paste, notes, wrong/skip numbers)
+   only commit to appState on the 'change' event, which fires on blur — if the
+   user pastes a huge quiz and then switches apps / locks the phone / closes
+   the tab WITHOUT tapping elsewhere first, that change/save never fires and
+   the paste is silently lost even though storage itself works fine. This
+   flushes synchronously the moment the page is about to be hidden: it blurs
+   whatever's focused (forcing its pending 'change' to commit into appState
+   right now, not 250ms from now) then writes straight to localStorage,
+   skipping the debounce entirely so it can't be cut off mid-timer. */
+      function flushSaveNow() {
+        try {
+          if (
+            document.activeElement &&
+            document.activeElement !== document.body &&
+            typeof document.activeElement.blur === "function"
+          ) {
+            document.activeElement.blur();
+          }
+        } catch (e) {}
+        clearTimeout(saveTimer);
+        try {
+          const json = JSON.stringify(appState);
+          if (lsAvailable) {
+            try {
+              localStorage.setItem(STORAGE_KEY, json);
+            } catch (e) {}
+          } else {
+            memoryFallback[STORAGE_KEY] = json;
+          }
+          idbSet(STORAGE_KEY, json); // best-effort, not awaited — page may already be gone by the time it resolves
+        } catch (e) {}
+      }
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) flushSaveNow();
+      });
+      window.addEventListener("pagehide", flushSaveNow);
+      window.addEventListener("blur", flushSaveNow);
       function flashToast(msg) {
         const t = document.getElementById("toast");
         t.textContent = msg;
@@ -2968,14 +3197,12 @@
         return "weak";
       }
       function renderQuizLog(LIVE) {
-        const sessions = appState.sessions
-          .slice()
-          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const allSessions = appState.sessions.slice();
         let html = `<div class="source-head"><h2>📝 Quiz Log — تحليل شامل</h2><div class="dash-sub" style="margin-top:6px">سجّل نتيجة كل كويز، وقيّم كل موضوع مرتبط بيها في نفس المكان — من غير ما ترجع تدور عليه في الشيتات.</div>
-    <div class="quick-actions" style="margin-top:12px"><button class="btn small primary" id="newSessionBtn">+ جلسة جديدة (يدوي)</button></div></div>`;
+    <div class="quick-actions" style="margin-top:12px"><button class="btn small primary" id="newSessionBtn">+ جلسة جديدة (يدوي)</button><button class="btn small" id="expandAllSessionsBtn">🔽 افتح كل الجلسات</button><button class="btn small" id="collapseAllSessionsBtn">🔼 اقفل كل الجلسات</button></div></div>`;
         html += `<div class="qlog-summary">`;
         Object.keys(SOURCE_META).forEach((src) => {
-          const srcSessions = sessions.filter(
+          const srcSessions = allSessions.filter(
             (s) => s.src === src && Number(s.total) > 0,
           );
           if (!srcSessions.length) {
@@ -2991,12 +3218,75 @@
           }
         });
         html += `</div>`;
-        if (!sessions.length) {
+
+        if (!allSessions.length) {
           html += `<div class="empty-state">لسه مفيش جلسات. أفضل طريقة تبدأ بيها: حدد مواضيع من أي شيت، وادوس "💾 احفظ كجلسة" في الـ Quiz Builder تحت — كده الجلسة هتيجي معاها المواضيع مربوطة تلقائي.</div>`;
+          return html;
+        }
+
+        // #1 — filter by source + sort control
+        const filterCounts = { all: allSessions.length };
+        Object.keys(SOURCE_META).forEach(
+          (src) =>
+            (filterCounts[src] = allSessions.filter(
+              (s) => s.src === src,
+            ).length),
+        );
+        html += `<input type="text" class="qb-search" id="qlogSearchInput" placeholder="دور على جلسة بالتاريخ أو المواضيع أو الملاحظات..." value="${escapeAttr(qlogSearchQuery)}">`;
+        html += `<div class="qlog-controls-row">`;
+        html += `<div class="qb-filter-row" style="margin-bottom:0; flex:1;">`;
+        html += `<button class="qb-filter-btn ${qlogSrcFilter === "all" ? "active-all" : ""}" data-qlog-filter="all">الكل <span class="qb-filter-count">${filterCounts.all}</span></button>`;
+        Object.keys(SOURCE_META).forEach((src) => {
+          if (!filterCounts[src]) return;
+          html += `<button class="qb-filter-btn ${qlogSrcFilter === src ? "active-src" : ""}" data-qlog-filter="${src}">${SOURCE_META[src].label} <span class="qb-filter-count">${filterCounts[src]}</span></button>`;
+        });
+        html += `</div>`;
+        html += `<select id="qlogSortSelect" class="qlog-sort-select">
+    <option value="newest" ${qlogSort === "newest" ? "selected" : ""}>⏱ الأحدث الأول</option>
+    <option value="oldest" ${qlogSort === "oldest" ? "selected" : ""}>⏱ الأقدم الأول</option>
+    <option value="score-high" ${qlogSort === "score-high" ? "selected" : ""}>📈 الأعلى درجة الأول</option>
+    <option value="score-low" ${qlogSort === "score-low" ? "selected" : ""}>📉 الأقل درجة الأول</option>
+  </select>`;
+        html += `</div>`;
+
+        // apply filter
+        let sessions = allSessions;
+        if (qlogSrcFilter !== "all")
+          sessions = sessions.filter((s) => s.src === qlogSrcFilter);
+        // apply search (#4)
+        const q = qlogSearchQuery.trim().toLowerCase();
+        if (q) {
+          sessions = sessions.filter((s) => {
+            const haystack = [
+              s.date,
+              s.topics,
+              s.notes,
+              SOURCE_META[s.src] ? SOURCE_META[s.src].label : s.src,
+            ]
+              .join(" ")
+              .toLowerCase();
+            return haystack.indexOf(q) !== -1;
+          });
+        }
+        // apply sort (#1)
+        sessions = sessions.slice().sort((a, b) => {
+          if (qlogSort === "oldest")
+            return (a.createdAt || 0) - (b.createdAt || 0);
+          if (qlogSort === "score-high") return scorePct(b) - scorePct(a);
+          if (qlogSort === "score-low") return scorePct(a) - scorePct(b);
+          return (b.createdAt || 0) - (a.createdAt || 0); // newest (default)
+        });
+
+        if (!sessions.length) {
+          html += `<div class="empty-state">مفيش جلسات مطابقة للفلتر/البحث ده.</div>`;
         } else {
           sessions.forEach((s) => (html += renderSessionCard(s, LIVE)));
         }
         return html;
+      }
+      function scorePct(s) {
+        const t = Number(s.total) || 0;
+        return t ? Math.round(((Number(s.correct) || 0) / t) * 100) : -1;
       }
       function renderSessionCard(s, LIVE) {
         const correct = Number(s.correct) || 0,
@@ -3072,7 +3362,55 @@
           linkedHtml += `</div>`;
         }
 
-        return `<div class="session-card ${s.draft ? "draft" : ""}" id="session-${s.id}" data-id="${s.id}">
+        const srcLabel = SOURCE_META[s.src] ? SOURCE_META[s.src].label : s.src;
+        const summaryScore =
+          pct !== null
+            ? `<span class="score-pct" style="background:${pctColor}22; color:${pctColor}; font-size:11px; padding:2px 8px;">${pct}%</span>`
+            : `<span class="dash-sub" style="font-size:11px;">لسه من غير درجة</span>`;
+        const draftTag = s.draft
+          ? `<span class="file-tag" style="margin-top:0; color:var(--accent); background:var(--accent-dim);">✏️ مسودة</span>`
+          : "";
+        const linkedTag = topicIds.length
+          ? `<span class="file-tag" style="margin-top:0">🔗 ${topicIds.length} موضوع</span>`
+          : "";
+        const aiTag =
+          s.aiState === "loading"
+            ? `<span class="dash-sub" style="font-size:11px;">🧠 بيتحلل...</span>`
+            : s.aiAnalysis && s.aiAnalysis.ratings
+              ? `<span class="dash-sub" style="font-size:11px; color:var(--accent);">🧠 اتحلل</span>`
+              : "";
+        const isOpen = openSessionIds.has(s.id);
+        const hasRaw = !!(s.rawText && s.rawText.trim());
+        const hasScore = s.correct !== "" && s.total !== "";
+        // #3 — flag sessions missing one half of the data they need (a score with no quiz text loses AI accuracy; quiz text with no score can't compute %)
+        const completenessTag =
+          !hasScore && !hasRaw
+            ? ""
+            : hasScore && !hasRaw
+              ? `<span class="file-tag" style="margin-top:0; color:var(--good); background:var(--good-dim);" title="حط نص الكويز الكامل عشان بنك الأسئلة وتحليل Gemini يبقوا أدق">🧩 محتاجة نص الكويز</span>`
+              : hasRaw && !hasScore
+                ? `<span class="file-tag" style="margin-top:0; color:var(--good); background:var(--good-dim);" title="حط الدرجة (صح/كل الأسئلة)">🧩 محتاجة الدرجة</span>`
+                : "";
+        // #2 — quick link to this session's parsed questions in the Question Bank tab (only makes sense if there's quiz text to show)
+        const viewInQbankBtn = hasRaw
+          ? `<button class="icon-btn" data-view-in-qbank="${s.id}" title="شوف أسئلة الجلسة دي في بنك الأسئلة">📚</button>`
+          : "";
+
+        return `<details class="session-card ${s.draft ? "draft" : ""}" id="session-${s.id}" data-id="${s.id}" ${isOpen ? "open" : ""}>
+    <summary class="session-summary">
+      <div class="session-summary-main">
+        <span class="session-summary-date">📅 ${s.date || "—"}</span>
+        <span class="src-badge">${escapeHtml(srcLabel)}</span>
+        ${summaryScore}
+        ${linkedTag}
+        ${completenessTag}
+        ${draftTag}
+        ${aiTag}
+      </div>
+      ${viewInQbankBtn}
+      <button class="icon-btn danger-hover" data-del-session="${s.id}" title="حذف الجلسة">🗑</button>
+    </summary>
+    <div class="session-body">
     <div class="session-top">
       <input type="date" data-field="date" data-id="${s.id}" value="${s.date}">
       <select data-field="src" data-id="${s.id}">${Object.keys(SOURCE_META)
@@ -3082,7 +3420,6 @@
         )
         .join("")}</select>
       ${topicIds.length ? `<span class="file-tag" style="margin-top:0">🔗 ${topicIds.length} موضوع مربوط</span>` : ""}
-      <button class="btn small danger" data-del-session="${s.id}" style="margin-inline-start:auto">🗑 حذف</button>
     </div>
     <div class="score-row"><span style="font-family:var(--mono); font-size:11.5px; color:var(--muted)">الدرجة:</span>
       <input type="number" min="0" data-field="correct" data-id="${s.id}" value="${s.correct}"> /
@@ -3106,36 +3443,118 @@
     <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">ملاحظات إضافية — ولو مش متأكد من رقم سؤال معين، اوصفه هنا بدل ما تخمّن رقمه (مثلاً "السؤال اللي عن إنذار الـ LOM" بدل "سؤال 6")، والـ AI هيدوّر عليه بنفسه في النص ويأكدلك رقمه الصح:</label>
     <textarea class="session-textarea" data-field="notes" data-id="${s.id}">${escapeHtml(s.notes)}</textarea>
     ${linkedHtml}
-  </div>`;
+    </div>
+  </details>`;
       }
       function attachQuizLogListeners(LIVE) {
         const newBtn = document.getElementById("newSessionBtn");
         if (newBtn)
           newBtn.addEventListener("click", () => createSession("hcia", "", []));
+        const expandAllBtn = document.getElementById("expandAllSessionsBtn");
+        if (expandAllBtn)
+          expandAllBtn.addEventListener("click", () => {
+            appState.sessions.forEach((s) => openSessionIds.add(s.id));
+            render();
+          });
+        const collapseAllBtn = document.getElementById(
+          "collapseAllSessionsBtn",
+        );
+        if (collapseAllBtn)
+          collapseAllBtn.addEventListener("click", () => {
+            openSessionIds.clear();
+            render();
+          });
+        document.querySelectorAll("details.session-card").forEach((el) => {
+          el.addEventListener("toggle", () => {
+            if (el.open) openSessionIds.add(el.dataset.id);
+            else openSessionIds.delete(el.dataset.id);
+          });
+        });
         document.querySelectorAll("[data-del-session]").forEach((btn) => {
-          btn.addEventListener("click", () =>
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault(); // don't let the click also toggle the <details> it sits inside
             showConfirmDialog(
               "تمسح الجلسة دي؟ الخطوة دي مش هترجع فيها.",
               () => {
                 appState.sessions = appState.sessions.filter(
                   (s) => s.id !== btn.dataset.delSession,
                 );
+                openSessionIds.delete(btn.dataset.delSession);
                 saveState(true);
                 render();
               },
-            ),
-          );
+            );
+          });
+        });
+        // #1 — source filter buttons + sort dropdown
+        document.querySelectorAll("[data-qlog-filter]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            qlogSrcFilter = btn.dataset.qlogFilter;
+            render();
+          });
+        });
+        const sortSelect = document.getElementById("qlogSortSelect");
+        if (sortSelect)
+          sortSelect.addEventListener("change", () => {
+            qlogSort = sortSelect.value;
+            render();
+          });
+        // #4 — search box, same focus/cursor-preserving pattern as the Question Bank search
+        const qlogSearchInput = document.getElementById("qlogSearchInput");
+        if (qlogSearchInput) {
+          qlogSearchInput.addEventListener("input", () => {
+            const pos = qlogSearchInput.selectionStart;
+            qlogSearchQuery = qlogSearchInput.value;
+            render();
+            const fresh = document.getElementById("qlogSearchInput");
+            if (fresh) {
+              fresh.focus();
+              try {
+                fresh.setSelectionRange(pos, pos);
+              } catch (e) {}
+            }
+          });
+        }
+        // #2 — jump to this session's questions in the Question Bank tab
+        document.querySelectorAll("[data-view-in-qbank]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const sid = btn.dataset.viewInQbank;
+            activeTab = "questionbank";
+            qbStatusFilter = "all";
+            qbSearchQuery = ""; // reset so the target session can't be filtered out of view
+            searchQuery = "";
+            document.getElementById("searchInput").value = "";
+            render();
+            setTimeout(() => {
+              const el = document.getElementById("qb-session-" + sid);
+              if (el) {
+                el.open = true;
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 60);
+          });
         });
         document.querySelectorAll("[data-field]").forEach((el) => {
-          el.addEventListener("change", () => {
+          const commit = (showToast) => {
             const s = appState.sessions.find((x) => x.id === el.dataset.id);
             if (!s) return;
             s[el.dataset.field] = el.value;
             s.draft = false;
-            saveState(true);
+            saveState(showToast);
             if (el.dataset.field === "correct" || el.dataset.field === "total")
               render();
-          });
+          };
+          el.addEventListener("change", () => commit(true));
+          // textareas and free-text inputs (quiz paste, notes, wrong/skip numbers) also
+          // commit on every keystroke, debounced — so appState is never more than a
+          // moment behind what's on screen, even if the field never loses focus before
+          // the app gets closed/switched away from on mobile.
+          if (el.tagName === "TEXTAREA" || el.type === "text") {
+            el.addEventListener("input", () => commit(false));
+          }
         });
         document.querySelectorAll("[data-session-rate]").forEach((btn) => {
           btn.addEventListener("click", () => {
@@ -3215,6 +3634,7 @@
           draft: true,
           createdAt: Date.now(),
         };
+        openSessionIds.add(s.id);
         appState.sessions.push(s);
         saveState(true);
         activeTab = "quizlog";
@@ -3469,7 +3889,7 @@
           const wrongCount = items.filter((c) => c.status === "wrong").length;
           const skipCount = items.filter((c) => c.status === "skipped").length;
           const meta = SOURCE_META[s.src] ? SOURCE_META[s.src].label : s.src;
-          html += `<details class="qb-session" open>
+          html += `<details class="qb-session" id="qb-session-${s.id}" open>
       <summary>
         <div><div class="qb-session-title">${escapeHtml(s.topics || "كويز بدون اسم")} — ${s.date || ""}</div>
         <div class="qb-session-sub">${meta} · ${items.length} سؤال · ${s.correct || "?"}/${s.total || "?"} · ${wrongCount} غلط · ${skipCount} سكيب${qbStatusFilter !== "all" ? ` · بيعرض ${cards.length} بس (فلتر: ${QB_FILTER_LABEL[qbStatusFilter]})` : ""}</div></div>
