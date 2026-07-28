@@ -1114,6 +1114,79 @@
         font-size: 12px;
         padding: 8px 0;
       }
+      .qb-filter-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .qb-filter-btn {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.12s;
+      }
+      .qb-filter-btn:hover {
+        border-color: var(--muted);
+      }
+      .qb-filter-count {
+        font-size: 10.5px;
+        opacity: 0.75;
+      }
+      .qb-filter-btn.active-all {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .qb-filter-btn.active-wrong {
+        background: var(--weak-dim);
+        border-color: var(--weak);
+        color: var(--weak);
+      }
+      .qb-filter-btn.active-skipped {
+        background: var(--good-dim);
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .qb-filter-btn.active-correct {
+        background: var(--mastered-dim);
+        border-color: var(--mastered);
+        color: var(--mastered);
+      }
+      .num-fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 2px;
+      }
+      .num-field {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .num-field:focus {
+        border-color: var(--accent);
+      }
+      @media (max-width: 520px) {
+        .num-fields-row {
+          grid-template-columns: 1fr;
+        }
+      }
 
       .toast {
         position: fixed;
@@ -2892,7 +2965,17 @@
     <textarea class="session-textarea" data-field="topics" data-id="${s.id}">${escapeHtml(s.topics)}</textarea>
     <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">الصق هنا الكويز كامل لو متاح (الأسئلة + الإجابات الصح + علامة صح/غلط/سكيب لكل سؤال) — ده بيخلي تحليل الـ AI أدق بكتير من الملاحظات لوحدها:</label>
     <textarea class="session-textarea" data-field="rawText" data-id="${s.id}" placeholder="اختياري: انسخ نص الكويز كامل هنا (زي ما بيطلع من الموقع)، بالأسئلة والاختيارات والإجابة الصح، وحدد جنبها انت جاوبت صح ولا غلط ولا سكبتها">${escapeHtml(s.rawText || "")}</textarea>
-    <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">الأسئلة اللي غلطت فيها / ملاحظات (لو معندكش النص الكامل فوق، اكتب هنا بالتفصيل):</label>
+    <div class="num-fields-row">
+      <div>
+        <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">أرقام الأسئلة اللي غلطت فيها (افصل بفاصلة):</label>
+        <input type="text" class="num-field" data-field="wrongNums" data-id="${s.id}" placeholder="مثال: 6, 7, 10, 25, 26" value="${escapeAttr(s.wrongNums || "")}">
+      </div>
+      <div>
+        <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">أرقام الأسئلة اللي سكبتها (افصل بفاصلة):</label>
+        <input type="text" class="num-field" data-field="skippedNums" data-id="${s.id}" placeholder="مثال: 24" value="${escapeAttr(s.skippedNums || "")}">
+      </div>
+    </div>
+    <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">ملاحظات إضافية — ولو مش متأكد من رقم سؤال معين، اوصفه هنا بدل ما تخمّن رقمه (مثلاً "السؤال اللي عن إنذار الـ LOM" بدل "سؤال 6")، والـ AI هيدوّر عليه بنفسه في النص ويأكدلك رقمه الصح:</label>
     <textarea class="session-textarea" data-field="notes" data-id="${s.id}">${escapeHtml(s.notes)}</textarea>
     ${linkedHtml}
   </div>`;
@@ -2999,6 +3082,8 @@
           total: "",
           notes: "",
           rawText: "",
+          wrongNums: "",
+          skippedNums: "",
           draft: true,
           createdAt: Date.now(),
         };
@@ -3091,15 +3176,30 @@
       }
 
       /* Best-effort auto-detection of which question numbers the student marked
-   wrong/skipped, scanning both the pasted raw text and the freeform notes
-   for phrases like "wrong in question number 6,7,10" / "skipped number 24"
-   (English or Arabic). This is only a starting default — never trusted
-   blindly — the student can correct any question's status by hand, and
-   that manual choice always wins over this heuristic afterward. */
+   wrong/skipped. Priority order:
+   1) The structured "wrongNums" / "skippedNums" comma-separated fields —
+      explicit and unambiguous, always trusted first when filled in.
+   2) Free-text pattern matching over the raw quiz paste + notes, for
+      sessions logged before those structured fields existed, or when the
+      student just wrote prose instead of filling them in.
+   Either way, a manual per-question status click always overrides both. */
       function extractNumberList(str) {
         return (str.match(/\d+/g) || []).map((n) => parseInt(n, 10));
       }
-      function detectAutoStatus(rawText, notes) {
+      function detectAutoStatus(
+        rawText,
+        notes,
+        wrongNumsField,
+        skippedNumsField,
+      ) {
+        const structuredWrong = extractNumberList(wrongNumsField || "");
+        const structuredSkipped = extractNumberList(skippedNumsField || "");
+        if (structuredWrong.length || structuredSkipped.length) {
+          const wrong = new Set(structuredWrong);
+          const skipped = new Set(structuredSkipped);
+          skipped.forEach((n) => wrong.delete(n));
+          return { wrong, skipped };
+        }
         const combined = [rawText || "", notes || ""].join("\n");
         const wrong = new Set();
         const skipped = new Set();
@@ -3146,6 +3246,13 @@
       const QB_STATUS_ORDER = ["correct", "wrong", "skipped"];
 
       let qbSearchQuery = "";
+      let qbStatusFilter = "all";
+      const QB_FILTER_LABEL = {
+        all: "الكل",
+        wrong: "❌ غلط",
+        skipped: "⏭ سكيب",
+        correct: "✅ صح",
+      };
 
       function renderQuestionCard(s, q, status) {
         const badge = `<span class="qb-badge ${status}">${QB_STATUS_LABEL[status]}</span>`;
@@ -3175,23 +3282,46 @@
         const sessions = appState.sessions
           .slice()
           .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        // first pass: parse everything once, get global counts (unaffected by search/filter) for the filter bar
+        const perSession = sessions
+          .map((s) => {
+            const parsed = parseQuizMarkdown(s.rawText);
+            const auto = detectAutoStatus(
+              s.rawText,
+              s.notes,
+              s.wrongNums,
+              s.skippedNums,
+            );
+            const items = parsed.map((qq) => ({
+              qq,
+              status: getQuestionStatus(s, qq.num, auto.wrong, auto.skipped),
+            }));
+            return { s, items };
+          })
+          .filter((x) => x.items.length);
+
+        const totals = { all: 0, wrong: 0, skipped: 0, correct: 0 };
+        perSession.forEach(({ items }) =>
+          items.forEach(({ status }) => {
+            totals.all++;
+            totals[status]++;
+          }),
+        );
+
         let html = `<div class="source-head"><h2>📚 بنك الأسئلة — كل الكويزات اللي حطيتها</h2>
-    <div class="dash-sub" style="margin-top:6px">كل كويز لصقته نصه الكامل في 📝 Quiz Log بيتحول هنا لسلسلة أسئلة تقدر تراجعها، زي الـ Review في الكويز نفسه. اللي اتحدد غلط/سكيب بيتحدد تلقائي من كلامك، وتقدر تغيّره يدوي بالأزرار تحت كل سؤال.</div></div>
-    <input type="text" class="qb-search" id="qbSearchInput" placeholder="دور في كل الأسئلة اللي حطيتها (بالعربي أو الإنجليزي)..." value="${escapeAttr(qbSearchQuery)}">`;
+    <div class="dash-sub" style="margin-top:6px">كل كويز لصقته نصه الكامل في 📝 Quiz Log بيتحول هنا لسلسلة أسئلة تقدر تراجعها، زي الـ Review في الكويز نفسه. اللي اتحدد غلط/سكيب بيتحدد تلقائي من الحقول اللي كتبتها، وتقدر تغيّره يدوي بالأزرار تحت كل سؤال.</div></div>
+    <input type="text" class="qb-search" id="qbSearchInput" placeholder="دور في كل الأسئلة اللي حطيتها (بالعربي أو الإنجليزي)..." value="${escapeAttr(qbSearchQuery)}">
+    <div class="qb-filter-row">${["all", "wrong", "skipped", "correct"].map((f) => `<button class="qb-filter-btn ${qbStatusFilter === f ? "active-" + f : ""}" data-qb-filter="${f}">${QB_FILTER_LABEL[f]} <span class="qb-filter-count">${totals[f]}</span></button>`).join("")}</div>`;
 
         const q = qbSearchQuery.trim().toLowerCase();
         let anyParsed = false;
-        let anySessions = false;
 
-        sessions.forEach((s) => {
-          const parsed = parseQuizMarkdown(s.rawText);
-          if (!parsed.length) return;
-          anySessions = true;
-          const auto = detectAutoStatus(s.rawText, s.notes);
-          let cards = parsed.map((qq) => ({
-            qq,
-            status: getQuestionStatus(s, qq.num, auto.wrong, auto.skipped),
-          }));
+        perSession.forEach(({ s, items }) => {
+          let cards = items;
+          if (qbStatusFilter !== "all") {
+            cards = cards.filter(({ status }) => status === qbStatusFilter);
+          }
           if (q) {
             cards = cards.filter(
               ({ qq }) =>
@@ -3208,22 +3338,22 @@
           }
           if (!cards.length) return;
           anyParsed = true;
-          const wrongCount = cards.filter((c) => c.status === "wrong").length;
-          const skipCount = cards.filter((c) => c.status === "skipped").length;
+          const wrongCount = items.filter((c) => c.status === "wrong").length;
+          const skipCount = items.filter((c) => c.status === "skipped").length;
           const meta = SOURCE_META[s.src] ? SOURCE_META[s.src].label : s.src;
           html += `<details class="qb-session" open>
       <summary>
         <div><div class="qb-session-title">${escapeHtml(s.topics || "كويز بدون اسم")} — ${s.date || ""}</div>
-        <div class="qb-session-sub">${meta} · ${parsed.length} سؤال · ${s.correct || "?"}/${s.total || "?"} · ${wrongCount} غلط · ${skipCount} سكيب</div></div>
+        <div class="qb-session-sub">${meta} · ${items.length} سؤال · ${s.correct || "?"}/${s.total || "?"} · ${wrongCount} غلط · ${skipCount} سكيب${qbStatusFilter !== "all" ? ` · بيعرض ${cards.length} بس (فلتر: ${QB_FILTER_LABEL[qbStatusFilter]})` : ""}</div></div>
       </summary>
       <div class="qb-session-body">${cards.map(({ qq, status }) => renderQuestionCard(s, qq, status)).join("")}</div>
     </details>`;
         });
 
-        if (!anySessions) {
+        if (!perSession.length) {
           html += `<div class="empty-state">لسه مفيش أي جلسة فيها نص كويز كامل ملزوق. روح لـ 📝 Quiz Log وحط نص الكويز كامل في خانة "الصق هنا الكويز كامل" في أي جلسة — هيتحول تلقائي لأسئلة هنا.</div>`;
         } else if (!anyParsed) {
-          html += `<div class="empty-state">مفيش أسئلة مطابقة للبحث.</div>`;
+          html += `<div class="empty-state">مفيش أسئلة مطابقة للفلتر/البحث ده.</div>`;
         }
         return html;
       }
@@ -3244,6 +3374,12 @@
             }
           });
         }
+        document.querySelectorAll("[data-qb-filter]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            qbStatusFilter = btn.dataset.qbFilter;
+            render();
+          });
+        });
         document.querySelectorAll("[data-qb-status]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const s = appState.sessions.find(
@@ -3673,34 +3809,56 @@
         }
       }
 
-      function buildGeminiPrompt(topics, correct, total, notes, rawText) {
+      function buildGeminiPrompt(
+        topics,
+        correct,
+        total,
+        notes,
+        rawText,
+        wrongNums,
+        skippedNums,
+      ) {
         const topicLines = topics
           .map((t) => `- id:"${t.id}" | ${t.topic}`)
           .join("\n");
         const hasRaw = !!(rawText && rawText.trim());
-        const skipped = (Number(total) || 0) - (Number(correct) || 0);
+        const skippedCount = (Number(total) || 0) - (Number(correct) || 0);
+        const wrongList = (wrongNums || "").match(/\d+/g) || [];
+        const skippedList = (skippedNums || "").match(/\d+/g) || [];
+        const hasStructured = wrongList.length > 0 || skippedList.length > 0;
 
         const rawBlock = hasRaw
-          ? `Full quiz text as pasted by the student (question numbers, choices, marked correct answers, and their own right/wrong/skip status if visible in the text). This is GROUND TRUTH — prefer it over the notes below whenever both are present and they conflict:
+          ? `Full quiz text as pasted by the student (question numbers, choices, marked correct answers). This is GROUND TRUTH for question content — prefer it over the notes below whenever both are present and they conflict:
 """${rawText}"""`
-          : `(no full quiz text was pasted — only the notes below are available, so extraction is limited to what's explicitly written there)`;
+          : `(no full quiz text was pasted — only the fields below are available, so extraction is limited to what's explicitly written there)`;
+
+        const structuredBlock = hasStructured
+          ? `The student explicitly listed these question numbers using a dedicated field (this is their most deliberate, structured input — treat it as authoritative for WHICH numbers to focus on):
+- Marked WRONG: ${wrongList.length ? wrongList.join(", ") : "(none listed)"}
+- Marked SKIPPED: ${skippedList.length ? skippedList.join(", ") : "(none listed)"}
+IMPORTANT — the student sometimes second-guesses their own question numbering (they may say so in the notes below, e.g. "not sure which number this was" / "مش متأكد من الرقم" / "متلغبط"). Whenever the full quiz text is present, VERIFY every number above against it: confirm a question with that exact number actually exists in the parsed text. If a listed number doesn't exist in the quiz, or the notes explicitly flag uncertainty about numbering, do not silently trust the number — say so plainly in that topic's reason (e.g. "الرقم اللي كتبته مش متطابق مع الكويز، يفضل تتأكد منه") instead of presenting it as a confirmed fact.`
+          : `(the student didn't fill in the structured wrong/skipped number fields — rely on the raw quiz text and/or notes below instead)`;
 
         return `You are helping a student self-assess their knowledge after a quiz on optical transmission engineering (Huawei HCIA/HCIP + optical courses).
 
 They were quizzed on exactly these topics (this is the COMPLETE and ONLY valid list of topic ids — do not invent new ones, do not merge two of them together, do not add a topic id that isn't in this list even if the quiz content suggests one):
 ${topicLines}
 
-Score: ${correct} out of ${total} correct (so ${skipped >= 0 ? skipped : "an unknown number of"} question(s) were wrong or skipped).
+Score: ${correct} out of ${total} correct (so ${skippedCount >= 0 ? skippedCount : "an unknown number of"} question(s) were wrong or skipped in total).
 
 ${rawBlock}
 
-Their freeform notes (may be in Arabic, English, or mixed, may be empty if the full quiz text above already covers everything):
+${structuredBlock}
+
+Their freeform notes — may add context, or may describe a mistake by its CONTENT instead of a number when the student isn't sure of the exact question number (may be in Arabic, English, or mixed):
 """${notes || "(no notes provided)"}"""
 
 STEP 0 — Extract every wrong/skipped question (do this silently before writing your answer, do not output this step):
-- If the full quiz text is present: go question by question. For each question the student got wrong OR skipped, record its number, what concept/byte/alarm/signal/structure it was actually testing (using only terms that literally appear in that question's text, choices, or rationale — never a term you're guessing), and what the correct answer was. A skipped question is extracted exactly the same way as a wrong one — never treat "skipped" as neutral or ignore it just because no wrong choice was picked. Do not rely on the student's own notes to tell you which questions were wrong if the full quiz text already shows Right/Wrong/Skipped marks — count those directly and independently; if your count of wrong+skipped from the text doesn't match "${skipped}", recount before proceeding.
-- If only notes are present: list every distinct mistake mentioned, using ONLY the exact technical terms that literally appear in the notes text. If the notes name two specific things being confused (e.g. "X instead of Y"), record exactly those two names. Do not substitute, guess, or infer a different term that sounds similar but isn't written in the notes — if unsure which exact term applies, describe the mistake generically instead of naming a specific term.
-- Never invent a mistake, a wrong-answer choice, or a reason that isn't grounded in the pasted quiz text or the notes. If you cannot tell why a question was missed, say so generically rather than fabricating a plausible-sounding explanation.
+- Start from the structured wrong/skipped number lists above when present — verify each number exists in the raw quiz text (if present) and pull that question's actual content from there. If your count of wrong+skipped from the structured lists doesn't match "${skippedCount}", note the discrepancy rather than silently picking one source.
+- If the notes describe a mistake by CONTENT rather than by number (e.g. "the question about the LOM alarm" instead of "question 6"), search the raw quiz text for the question that matches that description and use its actual number — mention the number you identified in the reason so the student can double-check you found the right one. Never guess a number when a description is given; always locate it in the actual text.
+- If the full quiz text is present but neither the structured fields nor the notes give usable numbers, fall back to going question by question and treat the total wrong/skipped count from the score as your target to find, recording each mismatched question's number, what concept/byte/alarm/signal/structure it was actually testing (using only terms that literally appear in that question's text, choices, or rationale — never a term you're guessing), and what the correct answer was. A skipped question is extracted exactly the same way as a wrong one — never treat "skipped" as neutral or ignore it.
+- If only notes are present (no raw quiz text, no structured numbers): list every distinct mistake mentioned, using ONLY the exact technical terms that literally appear in the notes text. Do not substitute, guess, or infer a different term that sounds similar but isn't written in the notes — if unsure which exact term applies, describe the mistake generically instead of naming a specific term.
+- Never invent a mistake, a wrong-answer choice, a question number, or a reason that isn't grounded in the pasted quiz text or the notes. If you cannot tell why a question was missed, say so generically rather than fabricating a plausible-sounding explanation.
 
 STEP 1 — Topic matching:
 For each item extracted in step 0, match it to the SINGLE most specific topic id in the list above, based on what that specific question was actually testing. Topics can look adjacent but are NOT interchangeable — e.g. a question about OTUCn/beyond-100G frame structure belongs ONLY to a topic id about OTUCn/Beyond-100G if one exists in the list, never to a general "OTN framing structure (OTU/ODU/OPU)" topic id, even though both involve OTN framing. Do not lump a mistake into a broader/nearby topic just because it seems related — check every topic id in the list first and pick the closest match.
@@ -3770,6 +3928,8 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           s.total || 0,
           s.notes || "",
           s.rawText || "",
+          s.wrongNums || "",
+          s.skippedNums || "",
         );
         const model = cfg.model || "gemini-3.5-flash";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
