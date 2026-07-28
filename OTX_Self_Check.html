@@ -1,0 +1,3963 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OTX Self-Check — لوحة مراجعة النقل الضوئي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --panel: #101827;
+        --panel2: #141f36;
+        --border: #232e4d;
+        --border-soft: #1b2440;
+        --text: #e9edf7;
+        --muted: #8893ac;
+        --muted-dim: #5c6785;
+        --accent: #22d3c7;
+        --accent-dim: rgba(34, 211, 199, 0.14);
+        --accent-glow: rgba(34, 211, 199, 0.35);
+        --not-started: #4b5670;
+        --weak: #fb7565;
+        --weak-dim: rgba(251, 117, 101, 0.16);
+        --good: #f4b740;
+        --good-dim: rgba(244, 183, 64, 0.16);
+        --mastered: #39d98a;
+        --mastered-dim: rgba(57, 217, 138, 0.16);
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+        --sans: "Inter", system-ui, -apple-system, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        min-height: 100vh;
+        padding-bottom: 120px;
+      }
+      ::selection {
+        background: var(--accent-glow);
+      }
+      .storage-banner {
+        background: rgba(244, 183, 64, 0.12);
+        border-bottom: 1px solid rgba(244, 183, 64, 0.35);
+        color: var(--good);
+        font-size: 12px;
+        text-align: center;
+        padding: 8px 16px;
+        font-family: var(--mono);
+        display: none;
+      }
+      .storage-banner.show {
+        display: block;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: linear-gradient(180deg, #0a0e17 80%, rgba(10, 14, 23, 0));
+        padding: 22px 24px 14px;
+        border-bottom: 1px solid var(--border-soft);
+        backdrop-filter: blur(6px);
+      }
+      .topbar-inner {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          var(--accent),
+          #0b7e76 75%
+        );
+        box-shadow: 0 0 18px var(--accent-glow);
+        flex-shrink: 0;
+        position: relative;
+      }
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        background: rgba(10, 14, 23, 0.85);
+      }
+      h1 {
+        font-family: var(--mono);
+        font-size: 19px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.3px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 12.5px;
+        margin-top: 2px;
+        font-family: var(--mono);
+      }
+      .top-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search-box {
+        flex: 1;
+        min-width: 220px;
+        position: relative;
+      }
+      .search-box input {
+        width: 100%;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 9px 14px;
+        border-radius: 8px;
+        font-family: var(--sans);
+        font-size: 13.5px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .search-box input:focus {
+        border-color: var(--accent);
+      }
+      .search-box input::placeholder {
+        color: var(--muted-dim);
+      }
+      .btn {
+        background: var(--panel2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 9px 14px;
+        border-radius: 8px;
+        font-family: var(--sans);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn.danger:hover {
+        border-color: var(--weak);
+        color: var(--weak);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #062824;
+        border-color: var(--accent);
+        font-weight: 700;
+      }
+      .btn.primary:hover {
+        color: #062824;
+        opacity: 0.9;
+      }
+      .btn.small {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--muted-dim);
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .icon-btn:hover {
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .icon-btn.danger-hover:hover {
+        color: var(--weak);
+        background: var(--weak-dim);
+      }
+
+      .tabs {
+        max-width: 1120px;
+        margin: 14px auto 0;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .gemini-panel {
+        max-width: 1120px;
+        margin: 0 auto;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease;
+      }
+      .gemini-panel.open {
+        max-height: 220px;
+      }
+      .gemini-panel-inner {
+        background: var(--panel2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin: 0 24px 12px;
+      }
+      .gemini-panel-inner label {
+        font-size: 10.5px;
+        color: var(--muted);
+        font-family: var(--mono);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gemini-panel-inner input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-family: var(--sans);
+        outline: none;
+        margin-bottom: 10px;
+      }
+      .ai-box {
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+      .ai-rating-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        border-top: 1px solid var(--border-soft);
+        flex-wrap: wrap;
+      }
+      .ai-reason {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .countdown-text {
+        color: var(--good);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .tab {
+        padding: 8px 16px;
+        border-radius: 8px 8px 0 0;
+        font-size: 13px;
+        cursor: pointer;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-bottom: none;
+        font-family: var(--mono);
+        transition: all 0.15s;
+      }
+      .tab:hover {
+        color: var(--text);
+      }
+      .tab.active {
+        background: var(--panel);
+        color: var(--accent);
+        border-color: var(--border);
+        border-bottom: 2px solid var(--accent);
+      }
+      .tab-badge {
+        background: var(--weak);
+        color: #2a0500;
+        font-size: 9.5px;
+        font-weight: 700;
+        border-radius: 10px;
+        padding: 1px 6px;
+        margin-inline-start: 5px;
+      }
+
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+      .streak-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        margin-bottom: 16px;
+      }
+      .streak-badge b {
+        color: var(--accent);
+      }
+
+      .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .dash-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          transform 0.15s;
+      }
+      .dash-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .dash-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+      .dash-card h3 {
+        margin: 0;
+        font-size: 14px;
+        font-family: var(--mono);
+        font-weight: 600;
+      }
+      .dash-pct {
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .dash-sub {
+        color: var(--muted);
+        font-size: 11.5px;
+        margin-top: 2px;
+      }
+      .led-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        margin-top: 12px;
+      }
+      .led {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--not-started);
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .led:hover {
+        transform: scale(1.4);
+      }
+      .led.weak {
+        background: var(--weak);
+      }
+      .led.good {
+        background: var(--good);
+      }
+      .led.mastered {
+        background: var(--mastered);
+        box-shadow: 0 0 5px var(--mastered);
+      }
+
+      .overall-bar {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+      }
+      .overall-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .overall-top h3 {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        color: var(--muted);
+      }
+      .bar-track {
+        height: 8px;
+        background: var(--border-soft);
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+      }
+      .bar-seg {
+        height: 100%;
+      }
+
+      details.focus-section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+      details.focus-section summary {
+        padding: 13px 18px;
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none;
+      }
+      details.focus-section summary::-webkit-details-marker {
+        display: none;
+      }
+      details.focus-section summary::after {
+        content: "▾";
+        color: var(--muted);
+        font-size: 11px;
+        transition: transform 0.15s;
+      }
+      details.focus-section[open] summary::after {
+        transform: rotate(180deg);
+      }
+      .focus-body {
+        padding: 0 18px 14px;
+      }
+
+      .source-head {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+      }
+      .source-head-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+      .source-head h2 {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 15px;
+      }
+      .file-tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        padding: 3px 9px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 4px;
+      }
+      .quick-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      details.category {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      details.category summary {
+        padding: 12px 16px;
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none;
+        color: var(--text);
+      }
+      details.category summary::-webkit-details-marker {
+        display: none;
+      }
+      details.category summary::after {
+        content: "▾";
+        color: var(--muted);
+        transition: transform 0.15s;
+        font-size: 11px;
+      }
+      details.category[open] summary::after {
+        transform: rotate(180deg);
+      }
+      .cat-count {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .cat-done-tag {
+        color: var(--mastered);
+        font-size: 10px;
+        margin-inline-end: 8px;
+      }
+
+      .topic-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border-soft);
+      }
+      .topic-row.highlight {
+        background: var(--accent-dim);
+      }
+      .topic-row input[type="checkbox"] {
+        margin-top: 4px;
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .topic-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .topic-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .topic-title {
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+      .topic-desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+        line-height: 1.5;
+      }
+      .row-tools {
+        display: flex;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+      .src-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        padding: 2px 7px;
+        border-radius: 5px;
+        margin-inline-end: 6px;
+      }
+      .custom-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--mastered);
+        background: var(--mastered-dim);
+        padding: 2px 7px;
+        border-radius: 5px;
+        margin-inline-end: 6px;
+      }
+      .overdue-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--weak);
+        background: var(--weak-dim);
+        padding: 2px 7px;
+        border-radius: 5px;
+        margin-inline-end: 6px;
+      }
+      .soon-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--good);
+        background: var(--good-dim);
+        padding: 2px 7px;
+        border-radius: 5px;
+        margin-inline-end: 6px;
+      }
+      .notes-input {
+        width: 100%;
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        margin-top: 7px;
+        font-family: var(--sans);
+        outline: none;
+      }
+      .notes-input:focus {
+        border-color: var(--accent);
+      }
+      .notes-input::placeholder {
+        color: var(--muted-dim);
+      }
+      .status-col {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex-shrink: 0;
+        min-width: 104px;
+      }
+      .status-btn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.12s;
+      }
+      .status-btn:hover {
+        border-color: var(--muted);
+      }
+      .status-btn.sel-not_started.active {
+        background: rgba(75, 86, 112, 0.25);
+        border-color: var(--not-started);
+        color: #b7bfd4;
+      }
+      .status-btn.sel-weak.active {
+        background: var(--weak-dim);
+        border-color: var(--weak);
+        color: var(--weak);
+      }
+      .status-btn.sel-good.active {
+        background: var(--good-dim);
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .status-btn.sel-mastered.active {
+        background: var(--mastered-dim);
+        border-color: var(--mastered);
+        color: var(--mastered);
+      }
+      .last-rev {
+        color: var(--muted-dim);
+        font-size: 9.5px;
+        font-family: var(--mono);
+        text-align: center;
+        margin-top: 2px;
+      }
+
+      .edit-form input[type="text"],
+      .edit-form textarea {
+        width: 100%;
+        background: var(--panel2);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-family: var(--sans);
+        outline: none;
+        margin-bottom: 6px;
+      }
+      .edit-form textarea {
+        min-height: 44px;
+        resize: vertical;
+      }
+      .edit-form-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .add-row {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border-soft);
+      }
+      .add-form {
+        background: var(--panel2);
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 16px;
+      }
+      .add-form input[type="text"],
+      .add-form textarea,
+      .add-form select {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-family: var(--sans);
+        outline: none;
+        margin-bottom: 8px;
+      }
+      .add-form label {
+        font-size: 10.5px;
+        color: var(--muted);
+        font-family: var(--mono);
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .priority-section {
+        margin-bottom: 16px;
+      }
+      .priority-section-title {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        padding: 0 2px;
+      }
+
+      .qlog-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .qlog-sum-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .qlog-sum-card h4 {
+        margin: 0 0 4px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .qlog-sum-card .val {
+        font-family: var(--mono);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .session-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .session-card.draft {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent-glow);
+      }
+      .session-top {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .session-top select,
+      .session-top input[type="date"] {
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        outline: none;
+      }
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .score-row input[type="number"] {
+        width: 56px;
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 13px;
+        text-align: center;
+        outline: none;
+      }
+      .score-pct {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 14px;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+      .session-textarea {
+        width: 100%;
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-family: var(--sans);
+        outline: none;
+        resize: vertical;
+        min-height: 44px;
+      }
+      .session-textarea:focus {
+        border-color: var(--accent);
+      }
+
+      .quiz-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+        transform: translateY(calc(100% - 46px));
+        transition: transform 0.25s ease;
+      }
+      .quiz-bar.expanded {
+        transform: translateY(0);
+      }
+      .quiz-bar-handle {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+      }
+      .quiz-bar-handle h3 {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .count-pill {
+        background: var(--accent);
+        color: #062824;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 12px;
+      }
+      .quiz-body {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 24px 20px;
+        max-height: 56vh;
+        overflow-y: auto;
+      }
+      .group-strip {
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+      }
+      .group-strip-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+      .group-meta {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--accent);
+      }
+      .file-edit {
+        background: var(--bg);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 5px 9px;
+        border-radius: 6px;
+        width: 100%;
+        outline: none;
+      }
+      .combined-wrap {
+        margin-top: 14px;
+      }
+      .combined-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .prompt-text {
+        background: var(--bg);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: 12px;
+        font-family: var(--sans);
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--text);
+        white-space: pre-wrap;
+        min-height: 44px;
+      }
+
+      .qb-search {
+        width: 100%;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: var(--sans);
+        font-size: 13.5px;
+        outline: none;
+        margin-bottom: 14px;
+      }
+      .qb-search:focus {
+        border-color: var(--accent);
+      }
+      details.qb-session {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 14px;
+        overflow: hidden;
+      }
+      details.qb-session summary {
+        padding: 14px 18px;
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      details.qb-session summary::-webkit-details-marker {
+        display: none;
+      }
+      details.qb-session summary::after {
+        content: "▾";
+        color: var(--muted);
+        font-size: 11px;
+        transition: transform 0.15s;
+      }
+      details.qb-session[open] summary::after {
+        transform: rotate(180deg);
+      }
+      .qb-session-title {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        font-weight: 700;
+      }
+      .qb-session-sub {
+        color: var(--muted);
+        font-size: 11.5px;
+        margin-top: 2px;
+        font-family: var(--mono);
+      }
+      .qb-session-body {
+        padding: 0 18px 16px;
+      }
+      .qb-card {
+        background: var(--panel2);
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+      }
+      .qb-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .qb-qtext {
+        font-size: 13.5px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+      .qb-qnum {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--accent);
+        margin-bottom: 3px;
+      }
+      .qb-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 3px 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .qb-badge.correct {
+        background: var(--mastered-dim);
+        color: var(--mastered);
+        border: 1px solid var(--mastered);
+      }
+      .qb-badge.wrong {
+        background: var(--weak-dim);
+        color: var(--weak);
+        border: 1px solid var(--weak);
+      }
+      .qb-badge.skipped {
+        background: var(--good-dim);
+        color: var(--good);
+        border: 1px solid var(--good);
+      }
+      .qb-badge.unknown {
+        background: rgba(75, 86, 112, 0.25);
+        color: #b7bfd4;
+        border: 1px solid var(--not-started);
+      }
+      .qb-choice {
+        padding: 7px 12px;
+        border-radius: 8px;
+        background: var(--bg);
+        border: 1px solid var(--border-soft);
+        font-size: 12.5px;
+        margin-bottom: 5px;
+      }
+      .qb-choice.correct {
+        background: var(--mastered-dim);
+        border-color: var(--mastered);
+        color: var(--mastered);
+        font-weight: 600;
+      }
+      .qb-hint {
+        color: var(--muted-dim);
+        font-size: 11.5px;
+        font-style: italic;
+        margin-top: 8px;
+      }
+      .qb-rationale {
+        color: var(--muted);
+        font-size: 11.5px;
+        margin-top: 6px;
+        line-height: 1.6;
+        border-top: 1px dashed var(--border-soft);
+        padding-top: 6px;
+      }
+      .qb-status-row {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .qb-status-btn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .qb-status-btn:hover {
+        border-color: var(--muted);
+      }
+      .qb-status-btn.active-correct {
+        background: var(--mastered-dim);
+        border-color: var(--mastered);
+        color: var(--mastered);
+      }
+      .qb-status-btn.active-wrong {
+        background: var(--weak-dim);
+        border-color: var(--weak);
+        color: var(--weak);
+      }
+      .qb-status-btn.active-skipped {
+        background: var(--good-dim);
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .qb-noraw {
+        color: var(--muted);
+        font-size: 12px;
+        padding: 8px 0;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 130px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--accent);
+        color: #062824;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-family: var(--mono);
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.25s;
+        z-index: 60;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 6, 12, 0.72);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 20px;
+      }
+      .confirm-overlay.show {
+        display: flex;
+      }
+      .confirm-box {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 22px 24px;
+        max-width: 360px;
+        width: 100%;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      }
+      .confirm-message {
+        font-size: 13.5px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+      .empty-state {
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+        padding: 24px 0;
+      }
+      .footer-note {
+        color: var(--muted-dim);
+        font-size: 11px;
+        text-align: center;
+        margin: 24px 0 8px;
+        font-family: var(--mono);
+      }
+
+      @media (max-width: 640px) {
+        .topic-row {
+          flex-wrap: wrap;
+        }
+        .status-col {
+          flex-direction: row;
+          flex-wrap: wrap;
+          min-width: 0;
+          width: 100%;
+        }
+        .status-btn {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="storage-banner" id="storageBanner"></div>
+
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div>
+            <h1>OTX SELF-CHECK</h1>
+            <div class="subtitle">
+              HCIA/HCIP-Transmission + Optical Courses — لوحة المراجعة الذاتية
+            </div>
+          </div>
+        </div>
+        <div class="top-controls">
+          <div class="search-box">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="دور على أي موضوع في كل المصادر... (English or عربي)"
+            />
+          </div>
+          <button class="btn small" id="geminiSettingsBtn">⚙️ Gemini AI</button>
+          <button class="btn small" id="saveNowBtn">💾 احفظ دلوقتي</button>
+          <button class="btn small" id="exportBtn">⬇ نسخة احتياطية</button>
+          <button class="btn small" id="importBtn">⬆ استيراد</button>
+          <input
+            type="file"
+            id="importFile"
+            accept=".json"
+            style="display: none"
+          />
+          <button class="btn small danger" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+      <div id="geminiPanel" class="gemini-panel">
+        <div class="gemini-panel-inner">
+          <label>Gemini API Key</label>
+          <input
+            type="password"
+            id="geminiKeyInput"
+            placeholder="الصق الـ API key هنا (بيتحفظ في متصفحك بس، مش في النسخة الاحتياطية)"
+          />
+          <label>Model</label>
+          <input
+            type="text"
+            id="geminiModelInput"
+            placeholder="gemini-3.5-flash"
+          />
+          <div class="edit-form-actions">
+            <button class="btn small primary" id="geminiSaveBtn">✔ حفظ</button>
+            <button class="btn small danger" id="geminiClearBtn">
+              🗑 امسح المفتاح
+            </button>
+            <button class="btn small" id="geminiTestBtn">
+              🧪 اختبر الاتصال
+            </button>
+            <span
+              id="geminiStatusText"
+              class="dash-sub"
+              style="align-self: center"
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div class="tabs" id="tabsRow"></div>
+    </div>
+
+    <div class="container" id="mainContainer"></div>
+    <div class="toast" id="toast"></div>
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="confirm-message" id="confirmMessage"></div>
+        <div class="edit-form-actions" style="justify-content: center">
+          <button class="btn small danger" id="confirmYesBtn">
+            ✔ اه، اتأكد
+          </button>
+          <button class="btn small" id="confirmNoBtn">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-bar" id="quizBar">
+      <div class="quiz-bar-handle" id="quizHandle">
+        <h3>
+          🎯 Quiz Prompt Builder <span class="count-pill" id="selCount">0</span>
+        </h3>
+        <span
+          style="color: var(--muted); font-size: 11px; font-family: var(--mono)"
+          >اضغط للفتح/القفل</span
+        >
+      </div>
+      <div class="quiz-body" id="quizBody"></div>
+    </div>
+
+    <script>
+      /* =====================================================================
+   DATA (built-in curated defaults — never mutated directly)
+===================================================================== */
+      const SOURCE_META = {
+        hcia: {
+          label: "HCIA-Transmission",
+          file: "HCIA-Transmission V2.5 Training Material",
+          short: "HCIA",
+          core: true,
+        },
+        hcip: {
+          label: "HCIP-Transmission",
+          file: "HCIP-Transmission V2.5 Training Material",
+          short: "HCIP",
+          core: true,
+        },
+        txn: {
+          label: "Optical TXN 2023",
+          file: "optical TXN 2023.txt",
+          short: "TXN23",
+          core: false,
+        },
+        oe: {
+          label: "Optics Expert Course",
+          file: "Optics Expert Course.txt",
+          short: "OPX",
+          core: false,
+        },
+      };
+
+      const RAW = {
+        hcia: [
+          [
+            "Transmission Network Overview",
+            "SDH / WDM / OTN concepts",
+            "الفرق الأساسي بين الثلاث تقنيات ودور كل واحدة",
+          ],
+          [
+            "Transmission Network Overview",
+            "General network structure & position in telecom infrastructure",
+            "مكان شبكة النقل في البنية التحتية ككل",
+          ],
+          ["SDH Principles", "Frame Structure", "بنية STM-N الأساسية"],
+          [
+            "SDH Principles",
+            "Multiplexing & Mapping",
+            "تجميع الإشارات والتدرج الرقمي",
+          ],
+          [
+            "SDH Principles",
+            "Overhead Bytes & Pointers",
+            "مصاريف التحكم والتشغيل والمؤشرات",
+          ],
+          [
+            "WDM Principles",
+            "Basic components (Mux/Demux, Optical Amplification)",
+            "المكونات الأساسية للنظام",
+          ],
+          [
+            "WDM Principles",
+            "Standard wavelengths — C-band / L-band",
+            "الأطوال الموجية المعيارية والنطاقات",
+          ],
+          [
+            "WDM Principles",
+            "Optical amplifiers & modules (EDFA, Transponders)",
+            "المقويات الضوئية والوحدات البصرية",
+          ],
+          [
+            "OTN Principles",
+            "OTN framing structure (OTU, ODU, OPU)",
+            "هيكل وتأطير OTN الأساسي",
+            "good",
+            "غلطة واحدة بس في موقع OPU overhead (columns 15-16) — تفصيلة رقمية، راجع خريطة الأعمدة مرة",
+          ],
+          [
+            "OTN Principles",
+            "Mapping & multiplexing within OTN layers",
+            "آليات التعيين والتجميع داخل الطبقات",
+            "good",
+            "مفيش أخطاء عليها في أول كويز",
+          ],
+          [
+            "OTN Principles",
+            "OTUk/ODUk Overhead Functions",
+            "وظائف كل بايت في الـ overhead",
+            "weak",
+            "لخبطة بين MFAS byte abnormality والـ alarm الصح (BDI بدل LOM) — راجع ربط كل byte بالـ alarm بتاعه",
+          ],
+          [
+            "OTN Principles",
+            "Tandem Connection Monitoring — TCM",
+            "مراقبة الاتصال التبادلي عبر عدة مشغلين",
+            "good",
+            "مفيش أخطاء عليها — أكد بكويز تاني قبل Mastered",
+          ],
+          [
+            "OTN Principles",
+            "OTN Maintenance Signals — AIS / LCK / OCI",
+            "إشارات الصيانة ومتى تظهر كل واحدة",
+            "weak",
+            "لخبطة LCK (إداري) مع الـ PLL/clock، ولخبطة LOM مع BDI — ذاكر جدول التفرقة",
+          ],
+          [
+            "Ethernet & Packet Principles",
+            "Ethernet services (E-Line, E-LAN, E-Tree)",
+            "أنواع خدمات الإيثرنت عبر شبكة النقل",
+          ],
+          [
+            "Ethernet & Packet Principles",
+            "VLAN & 802.1Q tagging",
+            "الوسم وأنواعه",
+          ],
+          [
+            "Transmission Protection Schemes",
+            "SDH protection (MSP, SNCP)",
+            "آليات الحماية في SDH",
+          ],
+          [
+            "Transmission Protection Schemes",
+            "WDM/OTN protection (Optical Line Protection 1+1)",
+            "حماية خط الإرسال الضوئي",
+          ],
+          [
+            "Network Management & Configuration (NCE-T/NMS)",
+            "NCE-T / U2000 interface & operation",
+            "التعامل مع واجهة نظام الإدارة",
+          ],
+          [
+            "Network Management & Configuration (NCE-T/NMS)",
+            "End-to-End Service Provisioning",
+            "إنشاء وتوزيع المسارات والخدمات",
+          ],
+          [
+            "Basic Maintenance & Troubleshooting",
+            "Alarms & Performance Analysis",
+            "قراءة ومتابعة الإنذارات ومؤشرات الأداء",
+          ],
+          [
+            "Basic Maintenance & Troubleshooting",
+            "Basic fault-finding steps",
+            "الخطوات الأساسية لتحديد الأعطال وحلها",
+          ],
+        ],
+        hcip: [
+          [
+            "Advanced WDM & OTN Technologies",
+            "ROADM & WSS (Wavelength Selective Switch)",
+            "المفاتيح الضوئية الذكية",
+          ],
+          [
+            "Advanced WDM & OTN Technologies",
+            "Coherent Transmission — 100G/400G/Super 100G",
+            "تقنيات النقل التوافقي والسعات",
+          ],
+          [
+            "Advanced WDM & OTN Technologies",
+            "Raman Amplifiers",
+            "المقويات الضوئية المتقدمة",
+          ],
+          [
+            "Advanced WDM & OTN Technologies",
+            "Beyond-100G (OTUCn) Structures",
+            "بنية OTUCn لما بعد الـ100G",
+            "weak",
+            "أضعف نقطة في أول كويز (2 من 5 غلطات): OTUCn section layer بس مش section+path زي OTUk، وFEC مش ثابت في تعريفه الأساسي",
+          ],
+          [
+            "Advanced WDM & OTN Technologies",
+            "OTN Multiplexing and Mapping Principles (متقدم)",
+            "مبادئ التعيين والتجميع المتقدمة",
+            "not_started",
+            "اقتراح Follow-up من الكويز — جرّبه بعدين",
+          ],
+          [
+            "Advanced WDM & OTN Technologies",
+            "Liquid OTN Evolution & OSU Containers",
+            "تطور Liquid OTN وحاويات OSU",
+            "not_started",
+            "اقتراح Follow-up من الكويز — جرّبه بعدين",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "Optical Power Budget Calculations",
+            "حسابات ميزانية القدرة الضوئية",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "OSNR Calculations",
+            "حسابات نسبة الإشارة إلى الضوضاء",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "Chromatic Dispersion & PMD Compensation",
+            "إدارة وتحديد التشتت الضوئي",
+          ],
+          [
+            "Optical Network Planning & Design",
+            "Optical Layer Performance Management (Optical Doctor)",
+            "أداة مراقبة أداء الطبقة الضوئية",
+            "not_started",
+            "اقتراح Follow-up من الكويز — جرّبه بعدين",
+          ],
+          [
+            "Packet Transport Network Principles (Advanced)",
+            "MPLS-TP & PWE3",
+            "بروتوكولات نقل الحزم المتقدمة",
+          ],
+          [
+            "Packet Transport Network Principles (Advanced)",
+            "QoS — Quality of Service",
+            "جودة الخدمة وإدارة الازدحام",
+          ],
+          [
+            "Clock & Time Synchronization",
+            "SyncE — Frequency Synchronization over Ethernet",
+            "مزامنة التردد عبر الإيثرنت",
+          ],
+          [
+            "Clock & Time Synchronization",
+            "IEEE 1588v2 / PTP",
+            "مزامنة الوقت والطور المتقدمة",
+          ],
+          [
+            "ASON / WSON Principles",
+            "Control Plane — concept & tasks",
+            "طبقة التحكم الذكية ومهامها",
+          ],
+          [
+            "ASON / WSON Principles",
+            "Re-routing & Restoration Mechanisms",
+            "آليات الاستعادة الذكية للمسارات",
+          ],
+          [
+            "Advanced Network Protection",
+            "Subrack & Board Protection",
+            "حماية الحلقات الضوئية واللوحات الداخلية",
+          ],
+          [
+            "Advanced Network Protection",
+            "MPLS-TP Protection (Dual-Homing & APS)",
+            "حماية شبكات MPLS-TP",
+          ],
+          [
+            "Advanced Network Protection",
+            "OTN Network Protection Mechanisms (SNCP, MSP)",
+            "آليات حماية الشبكة على مستوى OTN بالتفصيل",
+            "not_started",
+            "اقتراح Follow-up من الكويز — جرّبه بعدين",
+          ],
+          [
+            "Advanced Troubleshooting & Maintenance",
+            "Complex network alarm analysis & tracing",
+            "تحليل وتتبع إنذارات الشبكات المعقدة",
+          ],
+          [
+            "Advanced Troubleshooting & Maintenance",
+            "Optical signal quality / performance degradation troubleshooting",
+            "استكشاف وإصلاح مشكلات جودة الإشارة",
+          ],
+        ],
+        txn: [
+          [
+            "Career & Industry Overview",
+            "Scope of Work: Field Work vs NOC Work",
+            "الفرق بين العمل الميداني والعمل داخل الـ NOC",
+          ],
+          [
+            "Career & Industry Overview",
+            "NOC Team Structure (Implementation, Maintenance/Support, Planning&Design, Performance Monitoring, Integration, TAC/3rd Line, Solutions)",
+            "تقسيم الفرق الهندسية داخل مركز العمليات",
+          ],
+          [
+            "Career & Industry Overview",
+            "Market Players: Operators vs Vendors vs Subcontractors",
+            "أنواع الشركات في سوق الاتصالات",
+          ],
+          [
+            "Career & Industry Overview",
+            "Major Optical Vendors (Huawei, Nokia, ZTE, Infinera, Ciena)",
+            "أشهر الشركات المصنعة لمعدات النقل الضوئي",
+          ],
+          [
+            "Career & Industry Overview",
+            "Customer Types: Carrier vs Enterprise",
+            "عملاء الشبكات المشغلة مقابل عملاء الشركات",
+          ],
+          [
+            "Transmission Fundamentals",
+            "Transmission Concept & Purpose",
+            "نقل البيانات، تحقيق الاتصال، والمراقبة والتحكم عن بعد",
+          ],
+          [
+            "Transmission Fundamentals",
+            "Transmission Mediums: Wired/Fiber vs Wireless/Microwave",
+            "وسائط النقل السلكية واللاسلكية",
+          ],
+          [
+            "Transmission Fundamentals",
+            "Transmission Modes: Simplex / Half-Duplex / Full-Duplex",
+            "أنماط الإرسال والاستقبال",
+          ],
+          [
+            "Transmission Fundamentals",
+            "Transmission Domains: Access / Microwave / Optical(WDM-OTN) / IP",
+            "مجالات شبكات النقل الأربعة",
+          ],
+          [
+            "WDM Principles & Components",
+            "Fiber Types: Single-mode vs Multi-mode",
+            "الفروقات في أقطار الكور والمسارات",
+          ],
+          [
+            "WDM Principles & Components",
+            "Colorless (Gray/1310nm) vs Colored (C-Band/1550nm) signals",
+            "تصنيف الإشارات الضوئية حسب اللون",
+          ],
+          [
+            "WDM Principles & Components",
+            "OTU function (wavelength conversion)",
+            "وحدة الترانسبوندر الضوئي ووظيفتها",
+          ],
+          [
+            "WDM Principles & Components",
+            "OMU/ODU (Mux/Demux units)",
+            "وحدات التجميع والفك الضوئي",
+          ],
+          [
+            "WDM Principles & Components",
+            "Optical Amplifier types: Booster, Pre-amp, Line amp",
+            "أنواع المكبرات الضوئية",
+          ],
+          [
+            "WDM Principles & Components",
+            "OSC (Optical Supervisory Channel)",
+            "قناة الإشراف والإدارة الضوئية",
+          ],
+          [
+            "WDM Principles & Components",
+            "Fiber path patterns: Unidirectional vs Bidirectional",
+            "أنماط مسارات النقل الضوئي",
+          ],
+          [
+            "WDM Principles & Components",
+            "WDM system types: Open vs Integrated",
+            "أنظمة تطبيق WDM",
+          ],
+          [
+            "WDM Principles & Components",
+            "Spectrum bands (O/E/S/C/L/U) & why C/L preferred",
+            "نطاقات الأطوال الموجية وأسباب تفضيل C/L band",
+          ],
+          [
+            "WDM Principles & Components",
+            "ALS (Automatic Laser Shutdown)",
+            "نظام الإغلاق التلقائي لليزر لحماية الفنيين",
+          ],
+          [
+            "WDM Principles & Components",
+            "CWDM vs DWDM comparison",
+            "المقارنة من حيث Spacing وعدد القنوات والسعة والتكلفة",
+          ],
+          [
+            "WDM Principles & Components",
+            "DWDM advantages (capacity, transparency, distance, scalability)",
+            "مميزات وتطبيقات تكنولوجيا DWDM المتقدمة",
+          ],
+          [
+            "WDM Principles & Components",
+            "SFP module mechanics (laser & photodiode)",
+            "تركيب وحدات SFP الضوئية",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "Network Hierarchy: Access / Metro-Aggregation / Backbone-Core",
+            "الهيكل الهرمي لشبكات النقل الضوئي",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "Huawei OptiX OSN Series (1800/3800/6800/8800/9800)",
+            "كبائن ومعدات هواوي الضوئية",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "NMS Systems: U2000/NCE (Huawei) vs NFMT/1830 PSS (Nokia)",
+            "برامج وأنظمة إدارة الشبكة",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "Layer Architecture: L0 Optical / L1 Electrical / L2 Ethernet",
+            "مستويات الإشارة المعمارية",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "WDM Topologies: P2P, Chain, Ring, Tangent Ring, Intersecting Ring, Mesh",
+            "توبولوجيا شبكات WDM",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "SNCP Protection",
+            "مخطط الحماية في الشبكات الحلقية",
+          ],
+          [
+            "Network Hierarchy & Equipment",
+            "ASON",
+            "تكنولوجيا الشبكات الضوئية التلقائية الذكية",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "Site Application Scenarios: OTM / OADM / OLA / Regenerator",
+            "أنواع المواقع والتطبيقات لكبائن الـ WDM",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "OTM Chassis Card Tree: OTU, M40V, OBU, SC2/OSC, FIU, OLP/OLB",
+            "التركيب والتوصيل الداخلي لكابينة OTM",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "Attenuators: Fixed vs EVOA (Power Flatness)",
+            "أنواع المخمدات الضوئية",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "DCM (Dispersion Compensation Module)",
+            "وحدة التعويض عن التشتت الضوئي",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "OADM Types: FOADM vs ROADM",
+            "الأنظمة الثابتة مقابل القابلة لإعادة التشكيل",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "80-Channel System Design: M40 EVEN/ODD, ITL card, CTU/SWC",
+            "التصميم التفصيلي لنظام OTM بسعة 80 قناة",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "Bi-directional vs Unidirectional Cards",
+            "الفرق بين الكروت ثنائية وأحادية الاتجاه",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "Channel Spacing Reduction: 100GHz → 50GHz",
+            "تقليص الفواصل الترددية في نطاق C-Band",
+          ],
+          [
+            "Site Types & Card-Level Architecture",
+            "OLA Signal Flow & Port Mapping (TC/TM/RC/RM/IN/OUT/RM1/RM2/TM1/TM2)",
+            "تتبع بورتات الإرسال والاستقبال",
+          ],
+        ],
+        oe: [
+          [
+            "Course Scope & Career Path",
+            "Course Intro & Scope (Optics Expert)",
+            "مقدمة ونطاق الكورس والتأهيل العلمي",
+          ],
+          [
+            "Course Scope & Career Path",
+            "DWDM Design Engineer Scope of Work",
+            "تحليل مدخلات العملاء، حسابات السعة، التوبولوجيا، الجاهزية، الحماية",
+          ],
+          [
+            "Course Scope & Career Path",
+            "End-to-End Optical Network Project Lifecycle",
+            "دورة الحياة الكاملة لمشاريع الشبكات الضوئية",
+          ],
+          [
+            "Course Scope & Career Path",
+            "Professional Certifications (HCIA/HCIP, Nokia Optical Professional, Infinera)",
+            "الشهادات الاحترافية الدولية",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Optical Network Engineering",
+            "محور رئيسي في المنهج",
+          ],
+          [
+            "Course Curriculum Modules",
+            "DWDM Design",
+            "تصميم وتخطيط شبكات DWDM",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Deployment (Installation, Connectivity, Commissioning)",
+            "مرحلة الإنشاء والتنفيذ",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Service Configuration (Trails & Cross-Connections)",
+            "إعداد وتفعيل الخدمات",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Service Verification & Testing",
+            "قياس واختبار جودة الخدمات",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Performance Monitoring",
+            "مراقبة الأداء الضوئي",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Alarm Troubleshooting & Maintenance",
+            "استكشاف وأعطال الإنذارات والصيانة",
+          ],
+          [
+            "Course Curriculum Modules",
+            "OTN Specifications & Frame Structure",
+            "معمارية وأطر شبكات OTN",
+          ],
+          [
+            "Course Curriculum Modules",
+            "Management Interfaces: CLI, Web GUI, TMS/NMS",
+            "واجهات الإدارة والتحكم",
+          ],
+          [
+            "Commissioning & Configuration",
+            "Initial Commissioning Settings: IP Address, Static Route, VLAN, NEID, NENAME",
+            "الإعدادات الأساسية لمرحلة التشغيل الابتدائي",
+          ],
+          [
+            "Commissioning & Configuration",
+            "Trails & Cross-connections (Layer 0 vs Layer 1)",
+            "إعداد وتفعيل المسارات الضوئية والوصلات الداخلية",
+          ],
+          [
+            "Service Verification & Testing",
+            "Test Equipment Connection & Loopback",
+            "توصيل أجهزة التست وعمل اللوب",
+          ],
+          [
+            "Service Verification & Testing",
+            "RFC 2544 Testing (Throughput, Frame Loss, Latency, BER)",
+            "اختبار RFC 2544 المعياري",
+          ],
+          [
+            "Performance Monitoring (Detailed)",
+            "Monitoring Parameters: OSNR, RX/TX Power, BER, Q-Factor, ES, UAS",
+            "مؤشرات مراقبة الأداء الضوئي",
+          ],
+          [
+            "Performance Monitoring (Detailed)",
+            "Historical/Real-time Logs (15min/24h)",
+            "السجلات التاريخية واللحظية",
+          ],
+          [
+            "Alarm Troubleshooting & Maintenance (Detailed)",
+            "LOS Alarms & Root Cause Analysis",
+            "إنذارات فقد الإشارة وتحليل الأسباب الجذرية",
+          ],
+          [
+            "Alarm Troubleshooting & Maintenance (Detailed)",
+            "Loop Types: Facility vs Terminal",
+            "أنواع اللوب",
+          ],
+          [
+            "Alarm Troubleshooting & Maintenance (Detailed)",
+            "Warm vs Cold Reset",
+            "أنواع إعادة التشغيل",
+          ],
+          [
+            "Alarm Troubleshooting & Maintenance (Detailed)",
+            "Service Impact Assessment",
+            "تقييم التأثير على الخدمة",
+          ],
+          [
+            "Alarm Troubleshooting & Maintenance (Detailed)",
+            "Change Request (CR), Maintenance Windows, MOB",
+            "طلبات التغيير ونوافذ الصيانة",
+          ],
+          [
+            "OTN Layer Architecture (Course-specific)",
+            "OTN Layers: OPU, ODU, OTU, OMS, OTS",
+            "الهيكل الفني لطبقات وأطر إطار الـ OTN",
+          ],
+          [
+            "OTN Layer Architecture (Course-specific)",
+            "CLI Commands & Debug Logs",
+            "أدوات وواجهات التحكم الإدارية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Fiber Advantages (bandwidth, capacity, no EMI, long distance)",
+            "أسباب ومميزات استخدام الألياف الضوئية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Comparison with Other Media (microwave, satellite, copper/DSL, submarine, FTTH)",
+            "مقارنة وسائط النقل الضوئي واللاسلكي",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Fiber Structure: Core/Cladding & Refractive Index (n1>n2)",
+            "التركيب الفيزيائي لكابل الفايبر",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "SM vs MM Comparison (9µm vs 50/62.5µm)",
+            "المقارنة الفنية بين Single-Mode وMulti-Mode",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "MM Types: Step Index vs Graded Index",
+            "أنواع كابلات Multi-Mode حسب معامل الانكسار",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "ITU-T Standards: G.652, G.653, G.654, G.655",
+            "المعايير القياسية لكابلات الألياف أحادية النمط",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Transmission Patterns: Unidirectional vs Bidirectional & Spectrum Reuse",
+            "أنماط النقل عبر الشعيرات الضوئية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Spectrum Windows: 1st(850nm)/2nd(1310nm)/3rd(1550nm)",
+            "نوافذ الطيف الضوئي الرئيسية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Spectrum Bands: O/E/S/C/L/U",
+            "التقسيم الترددي لنطاقات الطيف الضوئي",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "C/L Band Preference (Attenuation ~0.2dB/km)",
+            "أسباب تفضيل نطاقي C-Band وL-Band",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "C-Band Evolution: Standard(40/48)→Extended→Super C(up to 120ch)",
+            "تطور نطاق C-Band لزيادة السعة",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "L-Band Evolution: Extended/Super L",
+            "تطور نطاق L-Band",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Channel Spacing 100→50GHz & Fixed vs Flex Grid",
+            "تأثير تقليص الفواصل الترددية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Cable Types: Simplex vs Duplex",
+            "أنواع كابلات الفايبر المباشرة",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Connectors: LC, SC, FC, MPO",
+            "أنواع الموصلات الضوئية",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Connector Polish Types: PC, UPC, APC",
+            "أنواع الموصلات حسب قطع الطرف الضوئي",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "Color Compatibility Standards",
+            "توافقية الألوان للكابلات والكونكتورات",
+          ],
+          [
+            "Fiber Fundamentals (Physical Layer)",
+            "MPO Applications & Fan-out/Breakout (40G QSFP+ → 4x10G)",
+            "تطبيقات موصلات MPO والفان-أوت",
+          ],
+          [
+            "Fiber Impairments",
+            "Linear vs Non-linear Effects",
+            "التشوهات والمشاكل الضوئية في الألياف",
+          ],
+          [
+            "Fiber Impairments",
+            "Attenuation Causes: Absorption (Water Peak 1380nm), Scattering, Micro/Macro Bending",
+            "أنواع ومسببات الوهن والفقد الضوئي",
+          ],
+          [
+            "Fiber Impairments",
+            "Attenuation Coefficient Calculations",
+            "حسابات معامل الفقد وإجمالي الـ Power Loss",
+          ],
+          [
+            "Fiber Impairments",
+            "Dispersion Types: Chromatic Dispersion vs PMD",
+            "أنواع التشتت الضوئي",
+          ],
+          [
+            "Fiber Impairments",
+            "Dispersion Compensation: DCM/DCU (Non-coherent) vs DSP (Coherent)",
+            "معالجة وتدارك التشتت الضوئي",
+          ],
+          [
+            "Amplification Technology",
+            "EDFA vs Raman Amplifiers (SRS theory, counter-propagating pump)",
+            "التكنولوجيا المتقدمة للمكبرات الضوئية",
+          ],
+          [
+            "Amplification Technology",
+            "Attenuators: Fixed vs EVOA",
+            "أنواع ووظائف المخمدات الضوئية",
+          ],
+          [
+            "Amplification Technology",
+            "Insertion Loss in Passive Elements",
+            "مفهوم وهن الإدخال في المكونات اللانشطة",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "DWDM-OTN Structure: Transponder System vs Line System",
+            "المكونات الهيكلية لنظام DWDM-OTN",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "Colorless → Colored Conversion",
+            "التحويل من الإشارات غير الملونة إلى الملونة",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "OLS (Open Line System) & Multi-vendor Interoperability",
+            "مفهوم أنظمة الخطوط المفتوحة",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "Chassis Architecture: Single vs Multi-Chassis",
+            "التجميع الداخلي للشاسيه",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "WDM Economic/Engineering Purpose (Fiber Utilization, Cost Reduction)",
+            "الغرض الاقتصادي والهندسي لتكنولوجيا WDM",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "P2P → Multi-point Evolution",
+            "التطور من اتصالات النقطة إلى المتعددة",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "OADM/FOADM vs ROADM",
+            "تقنيات التوجيه الضوئي والتجميع المتعدد",
+          ],
+          [
+            "System Architecture & Industry Context",
+            "Mux Card Evolution (M40, M48, 80/96/120 Channels, Super C/L)",
+            "تطور لوحات المالتيبليكسر",
+          ],
+          [
+            "Industry & Career Context",
+            "Application Sectors: Public Safety, Utilities (DEWA/ADNOC), Mobile, Cloud/DC",
+            "مجالات وتطبيقات الشبكات الضوئية في القطاعات",
+          ],
+          [
+            "Industry & Career Context",
+            "Work Environments: Vendors / Operators / Enterprise / Cloud-DC",
+            "بيئات العمل الوظيفية لمهندسي الأوبتكس",
+          ],
+          [
+            "Industry & Career Context",
+            "Vendor-Client Relationships (Equipment, Software, Support)",
+            "طبيعة العلاقات والعقود بين المصنعين والعملاء",
+          ],
+          [
+            "Industry & Career Context",
+            "Topology per Layer: Star(Access) / Ring(Aggregation) / Mesh(Core)",
+            "توزيع التوبولوجيا على طبقات الشبكة المعيارية",
+          ],
+          [
+            "Industry & Career Context",
+            "Data Encryption over DWDM",
+            "مفهوم وتطبيق تشفير البيانات عبر شبكات DWDM",
+          ],
+          [
+            "Industry & Career Context",
+            "Global Regions (AMER/APAC/EMEA-E100) & 24h Timezone Support",
+            "التقسيم الجغرافي الإقليمي للشبكات العالمية",
+          ],
+          [
+            "Industry & Career Context",
+            "Detailed Site Hierarchy: Region→Country→City/DC→...→Port",
+            "التسلسل الهرمي التفصيلي لمواقع ومعدات الشبكة",
+          ],
+          [
+            "Industry & Career Context",
+            "Product Documentation Types (Hardware, Software Upgrade, Config, Troubleshooting, Performance)",
+            "أنواع الأدلة والوثائق الفنية للمنتجات",
+          ],
+          [
+            "Industry & Career Context",
+            "Fiber Connections: Intra-chassis / Multi-chassis / ODF",
+            "توصيلات الألياف الضوئية الشاملة",
+          ],
+          [
+            "Industry & Career Context",
+            "Network Architecture Classification: Access/Edge, Metro(MC/Agg), Long-Haul, Submarine(Core)",
+            "التصنيف المعماري لطبقات الشبكة الضوئية",
+          ],
+          [
+            "Industry & Career Context",
+            "Service Migration Workflow: Impact Assessment, CR, Maintenance Windows",
+            "إجراءات عملية نقل وهجرة الخدمات",
+          ],
+        ],
+      };
+
+      const DATA = {};
+      Object.keys(RAW).forEach((src) => {
+        DATA[src] = RAW[src].map((row, i) => ({
+          id: src + "-" + i,
+          src,
+          cat: row[0],
+          topic: row[1],
+          desc: row[2],
+          defStatus: row[3] || "not_started",
+          defNote: row[4] || "",
+        }));
+      });
+
+      const STATUS_LABEL = {
+        not_started: "Not Started",
+        weak: "Weak",
+        good: "Good",
+        mastered: "Mastered",
+      };
+      const STATUS_ORDER = ["not_started", "weak", "good", "mastered"];
+      const REVIEW_OVERDUE_DAYS = 14;
+      const REVIEW_SOON_DAYS = 7;
+
+      /* =====================================================================
+   STORAGE — localStorage (primary) + IndexedDB (redundant backup)
+   Cookies were considered but dropped: a single cookie caps at ~4KB and
+   this dataset (150+ topics + notes + a growing session log) blows past
+   that fast, so cookies would silently truncate data. IndexedDB has no
+   such practical limit and is the correct "second layer" here.
+===================================================================== */
+      const STORAGE_KEY = "otx_selfcheck_v3";
+      const IDB_NAME = "otx_selfcheck_idb";
+      const IDB_STORE = "kv";
+      let memoryFallback = {};
+      let lsAvailable = false;
+      let idbAvailable = false;
+
+      function testLocalStorage() {
+        try {
+          localStorage.setItem("__t__", "1");
+          localStorage.removeItem("__t__");
+          lsAvailable = true;
+        } catch (e) {
+          lsAvailable = false;
+        }
+      }
+      function idbOpen() {
+        return new Promise((resolve, reject) => {
+          if (!("indexedDB" in window)) {
+            reject("no-idb");
+            return;
+          }
+          const req = indexedDB.open(IDB_NAME, 1);
+          req.onupgradeneeded = () => {
+            req.result.createObjectStore(IDB_STORE);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+      async function idbGet(key) {
+        try {
+          const db = await idbOpen();
+          return await new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE, "readonly");
+            const req = tx.objectStore(IDB_STORE).get(key);
+            req.onsuccess = () =>
+              resolve(req.result === undefined ? null : req.result);
+            req.onerror = () => reject(req.error);
+          });
+        } catch (e) {
+          return null;
+        }
+      }
+      async function idbSet(key, val) {
+        try {
+          const db = await idbOpen();
+          return await new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE, "readwrite");
+            tx.objectStore(IDB_STORE).put(val, key);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+          });
+        } catch (e) {
+          idbAvailable = false;
+          return false;
+        }
+      }
+
+      function updateStorageBanner() {
+        const el = document.getElementById("storageBanner");
+        if (lsAvailable) {
+          el.classList.remove("show");
+          return;
+        }
+        if (idbAvailable) {
+          el.textContent =
+            "ℹ️ localStorage مش متاح هنا، فبستخدم IndexedDB كتخزين احتياطي بدلاً منه — المفروض يشتغل، لكن الأضمن إنك تفتح الملف من جهازك مباشرة.";
+        } else {
+          el.textContent =
+            "⚠️ التخزين الدائم مش شغال في المعاينة دي خالص — الداتا في ذاكرة مؤقتة هتتمسح لو قفلت الصفحة. نزّل الملف وافتحه من جهازك، وخد نسخة احتياطية (⬇) بانتظام.";
+        }
+        el.classList.add("show");
+      }
+
+      let appState = {
+        topics: {},
+        sessions: [],
+        customTopics: { hcia: [], hcip: [], txn: [], oe: [] },
+        topicOverrides: {},
+        deletedIds: [],
+        reviewedToday: { date: "", ids: [] },
+      };
+      let selected = new Set();
+      let activeTab = "dashboard";
+      let searchQuery = "";
+      let editingId = null;
+      let activeAddForm = null; // {src, cat} or {src, newCat:true} or null
+
+      function defaultTopicState(topic) {
+        return {
+          status: topic.defStatus,
+          note: topic.defNote,
+          lastReviewed: topic.defStatus !== "not_started" ? todayStr() : "",
+        };
+      }
+      function todayStr() {
+        const d = new Date();
+        return (
+          d.getFullYear() +
+          "-" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+      function daysSince(dateStr) {
+        if (!dateStr) return null;
+        const d1 = new Date(dateStr + "T00:00:00"),
+          d2 = new Date(todayStr() + "T00:00:00");
+        return Math.round((d2 - d1) / 86400000);
+      }
+
+      function freshDefaultAppState() {
+        const st = {
+          topics: {},
+          sessions: [],
+          customTopics: { hcia: [], hcip: [], txn: [], oe: [] },
+          topicOverrides: {},
+          deletedIds: [],
+          reviewedToday: { date: "", ids: [] },
+        };
+        Object.values(DATA)
+          .flat()
+          .forEach((t) => {
+            st.topics[t.id] = defaultTopicState(t);
+          });
+        return st;
+      }
+      /* Used ONLY by the Reset button — a true blank slate (Not Started, no notes,
+   no sessions), unlike freshDefaultAppState() above which seeds the curated
+   starting example data and is only meant for a brand-new first-ever load. */
+      function blankAppState() {
+        const st = {
+          topics: {},
+          sessions: [],
+          customTopics: { hcia: [], hcip: [], txn: [], oe: [] },
+          topicOverrides: {},
+          deletedIds: [],
+          reviewedToday: { date: "", ids: [] },
+        };
+        Object.values(DATA)
+          .flat()
+          .forEach((t) => {
+            st.topics[t.id] = {
+              status: "not_started",
+              note: "",
+              lastReviewed: "",
+            };
+          });
+        return st;
+      }
+
+      async function loadState() {
+        testLocalStorage();
+        idbAvailable = "indexedDB" in window;
+        const base = freshDefaultAppState();
+
+        let lsParsed = null;
+        if (lsAvailable) {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) lsParsed = JSON.parse(raw);
+          } catch (e) {}
+        }
+        let idbParsed = null;
+        try {
+          const raw = await idbGet(STORAGE_KEY);
+          if (raw) idbParsed = JSON.parse(raw);
+        } catch (e) {
+          idbAvailable = false;
+        }
+
+        const stored = lsParsed || idbParsed || null;
+        if (stored) {
+          appState = Object.assign(base, {
+            topics: Object.assign(base.topics, stored.topics || {}),
+            sessions: stored.sessions || [],
+            customTopics: stored.customTopics || base.customTopics,
+            topicOverrides: stored.topicOverrides || {},
+            deletedIds: stored.deletedIds || [],
+            reviewedToday: stored.reviewedToday || { date: "", ids: [] },
+          });
+          // sync: if localStorage had nothing but IDB did, write back to localStorage
+          if (!lsParsed && idbParsed && lsAvailable) {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {}
+          }
+        } else {
+          appState = base;
+        }
+        updateStorageBanner();
+      }
+
+      let saveTimer = null;
+      function saveState(showToast) {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(async () => {
+          const json = JSON.stringify(appState);
+          let lsOk = false;
+          if (lsAvailable) {
+            try {
+              localStorage.setItem(STORAGE_KEY, json);
+              lsOk = true;
+            } catch (e) {
+              lsOk = false;
+            }
+          } else {
+            memoryFallback[STORAGE_KEY] = json;
+          }
+          const idbOk = await idbSet(STORAGE_KEY, json);
+          if (showToast) {
+            if (lsOk || idbOk) flashToast("💾 اتحفظ");
+            else flashToast("⚠️ الحفظ مؤقت بس (ذاكرة الجلسة)");
+          }
+          updateStorageBanner();
+        }, 250);
+      }
+      function flashToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove("show"), 1500);
+      }
+
+      /* native confirm()/alert() are blocked (no-op) inside the sandboxed preview
+   iframe, which silently breaks any "if(!confirm(...)) return;" delete flow.
+   This replaces it with an explicit on-page modal — no timing window to miss,
+   no silent revert, always visible until you actually choose. */
+      let _confirmCallback = null;
+      function showConfirmDialog(message, onConfirm) {
+        document.getElementById("confirmMessage").textContent = message;
+        _confirmCallback = onConfirm;
+        document.getElementById("confirmOverlay").classList.add("show");
+      }
+      function hideConfirmDialog() {
+        document.getElementById("confirmOverlay").classList.remove("show");
+        _confirmCallback = null;
+      }
+      document.getElementById("confirmYesBtn").addEventListener("click", () => {
+        const cb = _confirmCallback;
+        hideConfirmDialog();
+        if (cb) cb();
+      });
+      document
+        .getElementById("confirmNoBtn")
+        .addEventListener("click", hideConfirmDialog);
+      document
+        .getElementById("confirmOverlay")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "confirmOverlay") hideConfirmDialog();
+        });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hideConfirmDialog();
+      });
+
+      /* =====================================================================
+   LIVE DATA — recomputed each render (applies overrides / custom / deletes)
+===================================================================== */
+      function buildLive() {
+        const bySrc = {};
+        Object.keys(DATA).forEach((src) => {
+          const base = DATA[src]
+            .filter((t) => appState.deletedIds.indexOf(t.id) === -1)
+            .map((t) => {
+              const ov = appState.topicOverrides[t.id];
+              return ov
+                ? Object.assign({}, t, {
+                    topic: ov.topic !== undefined ? ov.topic : t.topic,
+                    desc: ov.desc !== undefined ? ov.desc : t.desc,
+                  })
+                : t;
+            });
+          const custom = (appState.customTopics[src] || [])
+            .filter((t) => appState.deletedIds.indexOf(t.id) === -1)
+            .map((t) => Object.assign({ custom: true, src }, t));
+          bySrc[src] = base.concat(custom);
+        });
+        const all = Object.values(bySrc).flat();
+        const byId = {};
+        all.forEach((t) => (byId[t.id] = t));
+        return { bySrc, all, byId };
+      }
+      function ensureTopicState(id) {
+        if (!appState.topics[id])
+          appState.topics[id] = {
+            status: "not_started",
+            note: "",
+            lastReviewed: "",
+          };
+        return appState.topics[id];
+      }
+
+      /* =====================================================================
+   TABS
+===================================================================== */
+      const TAB_LIST = [
+        ["dashboard", "📊 Dashboard"],
+        ["hcia", "HCIA-Transmission"],
+        ["hcip", "HCIP-Transmission"],
+        ["txn", "Optical TXN 2023"],
+        ["oe", "Optics Expert Course"],
+        ["quizlog", "📝 Quiz Log"],
+        ["questionbank", "📚 بنك الأسئلة"],
+      ];
+
+      function renderTabs(LIVE) {
+        const overdue = reviewDueList(LIVE).overdue.length;
+        const tabsRow = document.getElementById("tabsRow");
+        tabsRow.innerHTML = TAB_LIST.map(([key, label]) => {
+          const badge =
+            key === "dashboard" && overdue
+              ? ` <span class="tab-badge">${overdue}</span>`
+              : "";
+          return `<div class="tab ${activeTab === key ? "active" : ""}" data-tab="${key}">${label}${badge}</div>`;
+        }).join("");
+        tabsRow.querySelectorAll(".tab").forEach((el) => {
+          el.addEventListener("click", () => {
+            activeTab = el.dataset.tab;
+            searchQuery = "";
+            editingId = null;
+            activeAddForm = null;
+            document.getElementById("searchInput").value = "";
+            render();
+          });
+        });
+      }
+
+      /* =====================================================================
+   RENDER MAIN
+===================================================================== */
+      function computeStats(topics) {
+        const total = topics.length;
+        const counts = { not_started: 0, weak: 0, good: 0, mastered: 0 };
+        topics.forEach((t) => counts[ensureTopicState(t.id).status]++);
+        const pct = total
+          ? Math.round(((counts.good + counts.mastered) / total) * 100)
+          : 0;
+        return { total, counts, pct };
+      }
+      function barTrack(counts, total) {
+        if (!total) return '<div class="bar-track"></div>';
+        const segs = [
+          ["mastered", counts.mastered, "var(--mastered)"],
+          ["good", counts.good, "var(--good)"],
+          ["weak", counts.weak, "var(--weak)"],
+          ["not_started", counts.not_started, "var(--not-started)"],
+        ];
+        return `<div class="bar-track">${segs.map(([k, v, c]) => (v ? `<div class="bar-seg" style="width:${(v / total) * 100}%; background:${c}"></div>` : "")).join("")}</div>`;
+      }
+
+      function reviewDueList(LIVE) {
+        const list = LIVE.all
+          .filter((t) => {
+            const st = ensureTopicState(t.id);
+            if (st.status === "not_started" || !st.lastReviewed) return false;
+            return daysSince(st.lastReviewed) >= REVIEW_SOON_DAYS;
+          })
+          .sort(
+            (a, b) =>
+              daysSince(ensureTopicState(b.id).lastReviewed) -
+              daysSince(ensureTopicState(a.id).lastReviewed),
+          );
+        return {
+          overdue: list.filter(
+            (t) =>
+              daysSince(ensureTopicState(t.id).lastReviewed) >=
+              REVIEW_OVERDUE_DAYS,
+          ),
+          soon: list.filter(
+            (t) =>
+              daysSince(ensureTopicState(t.id).lastReviewed) <
+              REVIEW_OVERDUE_DAYS,
+          ),
+        };
+      }
+
+      function render() {
+        const LIVE = buildLive();
+        window.__LIVE = LIVE;
+        renderTabs(LIVE);
+        const container = document.getElementById("mainContainer");
+        if (searchQuery.trim()) {
+          container.innerHTML = renderSearchResults(LIVE, searchQuery.trim());
+        } else if (activeTab === "dashboard") {
+          container.innerHTML = renderDashboard(LIVE);
+        } else if (activeTab === "quizlog") {
+          container.innerHTML = renderQuizLog(LIVE);
+        } else if (activeTab === "questionbank") {
+          container.innerHTML = renderQuestionBank(LIVE);
+        } else {
+          container.innerHTML = renderSourceTab(LIVE, activeTab);
+        }
+        attachRowListeners(LIVE);
+        attachDashboardListeners(LIVE);
+        attachAddFormListeners(LIVE);
+        attachCollapseListeners();
+        attachQuizLogListeners(LIVE);
+        attachQuestionBankListeners();
+        renderQuizBuilder(LIVE);
+      }
+
+      function renderDashboard(LIVE) {
+        const overall = computeStats(LIVE.all);
+        const todayCount =
+          appState.reviewedToday.date === todayStr()
+            ? appState.reviewedToday.ids.length
+            : 0;
+        let html = `<div class="streak-badge">🔥 راجعت النهاردة: <b>${todayCount}</b> موضوع</div>`;
+        html += `<div class="overall-bar"><div class="overall-top"><h3>OVERALL PROGRESS — ${LIVE.all.length} sub-topic</h3><span style="font-family:var(--mono); color:var(--accent); font-weight:700;">${overall.pct}%</span></div>${barTrack(overall.counts, overall.total)}</div>`;
+
+        const due = reviewDueList(LIVE);
+        html += `<details class="focus-section" ${due.overdue.length ? "open" : ""}><summary>🔁 محتاج مراجعة <span class="cat-count">${due.overdue.length + due.soon.length}</span></summary><div class="focus-body">`;
+        if (!due.overdue.length && !due.soon.length) {
+          html += `<div class="empty-state">✅ مفيش حاجة محتاجة مراجعة دلوقتي.</div>`;
+        } else {
+          if (due.overdue.length) {
+            html += `<div class="priority-section"><div class="priority-section-title" style="color:var(--weak)">🔴 متأخر (14+ يوم) — ${due.overdue.length}</div>`;
+            due.overdue.forEach(
+              (t) =>
+                (html += renderRow(
+                  t,
+                  true,
+                  daysSince(ensureTopicState(t.id).lastReviewed),
+                )),
+            );
+            html += `</div>`;
+          }
+          if (due.soon.length) {
+            html += `<div class="priority-section"><div class="priority-section-title" style="color:var(--good)">🟡 قريب (7-13 يوم) — ${due.soon.length}</div>`;
+            due.soon.forEach(
+              (t) =>
+                (html += renderRow(
+                  t,
+                  true,
+                  daysSince(ensureTopicState(t.id).lastReviewed),
+                )),
+            );
+            html += `</div>`;
+          }
+        }
+        html += `</div></details>`;
+
+        const weakList = LIVE.all.filter(
+          (t) => ensureTopicState(t.id).status === "weak",
+        );
+        const coreNotStarted = LIVE.all.filter(
+          (t) =>
+            ensureTopicState(t.id).status === "not_started" &&
+            SOURCE_META[t.src].core,
+        );
+        const appliedNotStarted = LIVE.all.filter(
+          (t) =>
+            ensureTopicState(t.id).status === "not_started" &&
+            !SOURCE_META[t.src].core,
+        );
+        const prioCount =
+          weakList.length + coreNotStarted.length + appliedNotStarted.length;
+        html += `<details class="focus-section"><summary>📋 ذاكر ده بعدين <span class="cat-count">${prioCount}</span></summary><div class="focus-body">`;
+        html += `<div class="priority-section"><div class="priority-section-title" style="color:var(--weak)">🔴 أولوية 1 — Weak (${weakList.length})</div>${weakList.length ? weakList.map((t) => renderRow(t, true)).join("") : '<div class="empty-state">مفيش حاجة Weak 👍</div>'}</div>`;
+        html += `<div class="priority-section"><div class="priority-section-title" style="color:var(--good)">🟠 أولوية 2 — أساسيات HCIA/HCIP لسه (${coreNotStarted.length})</div>${coreNotStarted.length ? coreNotStarted.map((t) => renderRow(t, true)).join("") : '<div class="empty-state">خلصت الأساسيات 👍</div>'}</div>`;
+        html += `<div class="priority-section"><div class="priority-section-title" style="color:var(--accent)">🔵 أولوية 3 — تطبيقي لسه (${appliedNotStarted.length})</div>${appliedNotStarted.length ? appliedNotStarted.map((t) => renderRow(t, true)).join("") : '<div class="empty-state">خلصت التطبيقي كمان 👍</div>'}</div>`;
+        html += `</div></details>`;
+
+        html += '<div class="dash-grid">';
+        Object.keys(SOURCE_META).forEach((src) => {
+          const topics = LIVE.bySrc[src];
+          const stats = computeStats(topics);
+          html += `<div class="dash-card" data-goto="${src}">
+      <div class="dash-card-top"><div><h3>${SOURCE_META[src].label}</h3><div class="dash-sub">${stats.total} sub-topics</div></div><div class="dash-pct">${stats.pct}%</div></div>
+      ${barTrack(stats.counts, stats.total)}
+      <div class="led-strip">${topics.map((t) => `<div class="led ${ensureTopicState(t.id).status !== "not_started" ? ensureTopicState(t.id).status : ""}" title="${escapeHtml(t.topic)}" data-goto-topic="${t.id}"></div>`).join("")}</div>
+    </div>`;
+        });
+        html += "</div>";
+        html += `<div class="footer-note">بياناتك بتتحفظ تلقائيًا وخاصة بيك بس.</div>`;
+        return html;
+      }
+
+      function renderSourceTab(LIVE, src) {
+        const meta = SOURCE_META[src];
+        const topics = LIVE.bySrc[src];
+        const stats = computeStats(topics);
+        let html = `<div class="source-head">
+    <div class="source-head-top"><div><h2>${meta.label}</h2><span class="file-tag">📄 ${escapeHtml(meta.file)}</span></div><div class="dash-pct" style="font-size:18px">${stats.pct}%</div></div>
+    ${barTrack(stats.counts, stats.total)}
+    <div class="led-strip" style="margin-top:12px">${topics.map((t) => `<div class="led ${ensureTopicState(t.id).status !== "not_started" ? ensureTopicState(t.id).status : ""}" title="${escapeHtml(t.topic)}" data-goto-topic="${t.id}"></div>`).join("")}</div>
+    <div class="quick-actions" style="margin-top:12px">
+      <button class="btn small" data-quick="weak" data-src="${src}">☑ حدد كل الـ Weak</button>
+      <button class="btn small" data-quick="not_started" data-src="${src}">☑ حدد كل الـ Not Started</button>
+      <button class="btn small" data-quick="clear" data-src="${src}">✕ إلغاء التحديد</button>
+      <button class="btn small" data-expand-all="${src}">📂 افتح الكل</button>
+      <button class="btn small" data-collapse-all="${src}">📁 اقفل الكل</button>
+      <button class="btn small" data-new-cat="${src}">+ قسم جديد بالكامل</button>
+    </div>
+  </div>`;
+
+        if (
+          activeAddForm &&
+          activeAddForm.src === src &&
+          activeAddForm.newCat
+        ) {
+          html += renderAddForm(src, null);
+        }
+
+        const cats = [...new Set(topics.map((t) => t.cat))];
+        cats.forEach((cat) => {
+          const catTopics = topics.filter((t) => t.cat === cat);
+          const allDone =
+            catTopics.length > 0 &&
+            catTopics.every((t) => {
+              const s = ensureTopicState(t.id).status;
+              return s === "good" || s === "mastered";
+            });
+          html += `<details class="category" ${allDone ? "" : "open"}><summary>${escapeHtml(cat)} <span>${allDone ? '<span class=\"cat-done-tag\">✓ خلصان</span>' : ""}<span class="cat-count">${catTopics.length}</span></span></summary>`;
+          catTopics.forEach((t) => (html += renderRow(t)));
+          html += `<div class="add-row"><button class="btn small" data-add-topic-src="${src}" data-add-topic-cat="${escapeAttr(cat)}">+ أضف موضوع في القسم ده</button></div>`;
+          if (
+            activeAddForm &&
+            activeAddForm.src === src &&
+            activeAddForm.cat === cat
+          ) {
+            html += renderAddForm(src, cat);
+          }
+          html += `</details>`;
+        });
+        return html;
+      }
+
+      function renderAddForm(src, cat) {
+        const isNewCat = cat === null;
+        return `<div class="add-form" data-add-form="${src}::${isNewCat ? "__new__" : cat}">
+    ${isNewCat ? `<label>اسم القسم الجديد</label><input type="text" class="af-cat" placeholder="مثال: Advanced OTN Deep Dive">` : ""}
+    <label>اسم الموضوع</label><input type="text" class="af-topic" placeholder="اسم الموضوع (English يفضل)">
+    <label>وصف مختصر (اختياري)</label><textarea class="af-desc" placeholder="ملاحظة قصيرة بالعربي"></textarea>
+    <div class="edit-form-actions">
+      <button class="btn small primary" data-save-add="${src}" data-cat="${isNewCat ? "" : escapeAttr(cat)}">✔ إضافة</button>
+      <button class="btn small" data-cancel-add="1">إلغاء</button>
+    </div>
+  </div>`;
+      }
+
+      function renderSearchResults(LIVE, q) {
+        const ql = q.toLowerCase();
+        const matches = LIVE.all.filter(
+          (t) =>
+            t.topic.toLowerCase().includes(ql) ||
+            t.desc.includes(q) ||
+            t.cat.toLowerCase().includes(ql),
+        );
+        if (!matches.length)
+          return `<div class="empty-state">مفيش نتائج لـ "${escapeHtml(q)}"</div>`;
+        let html = `<div class="source-head"><h2>🔎 نتائج البحث عن: ${escapeHtml(q)}</h2><div class="dash-sub" style="margin-top:6px">${matches.length} موضوع</div></div>`;
+        html += `<details class="category" open><summary>Results <span class="cat-count">${matches.length}</span></summary>`;
+        matches.forEach((t) => (html += renderRow(t, true)));
+        html += `</details>`;
+        return html;
+      }
+
+      function renderRow(t, showSrcBadge, overdueDays) {
+        const st = ensureTopicState(t.id);
+        const isSel = selected.has(t.id);
+
+        if (editingId === t.id) {
+          return `<div class="topic-row" id="row-${t.id}">
+      <div class="topic-main edit-form">
+        <input type="text" class="ef-topic" value="${escapeAttr(t.topic)}">
+        <textarea class="ef-desc">${escapeHtml(t.desc)}</textarea>
+        <div class="edit-form-actions">
+          <button class="btn small primary" data-save-edit="${t.id}">✔ حفظ</button>
+          <button class="btn small" data-cancel-edit="1">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+        }
+
+        let badges = showSrcBadge
+          ? `<span class="src-badge">${SOURCE_META[t.src].short}</span>`
+          : "";
+        if (t.custom) badges += `<span class="custom-badge">مخصص</span>`;
+        if (overdueDays !== undefined) {
+          badges +=
+            overdueDays >= REVIEW_OVERDUE_DAYS
+              ? `<span class="overdue-badge">قبل ${overdueDays} يوم</span>`
+              : `<span class="soon-badge">قبل ${overdueDays} يوم</span>`;
+        }
+
+        return `<div class="topic-row" id="row-${t.id}">
+    <input type="checkbox" class="select-box" data-id="${t.id}" ${isSel ? "checked" : ""}>
+    <div class="topic-main">
+      <div class="topic-title-row">
+        <div class="topic-title">${badges}${escapeHtml(t.topic)}</div>
+        <div class="row-tools">
+          <button class="icon-btn" data-edit="${t.id}" title="تعديل">✏️</button>
+          <button class="icon-btn danger-hover" data-delete="${t.id}" title="حذف">🗑</button>
+        </div>
+      </div>
+      <div class="topic-desc">${escapeHtml(t.desc)}</div>
+      <input class="notes-input" data-id="${t.id}" placeholder="ملاحظات..." value="${escapeAttr(st.note)}">
+    </div>
+    <div class="status-col">
+      <div class="status-buttons" data-id="${t.id}">${STATUS_ORDER.map((s) => `<button class="status-btn sel-${s} ${st.status === s ? "active" : ""}" data-id="${t.id}" data-status="${s}">${STATUS_LABEL[s]}</button>`).join("")}</div>
+      <div class="last-rev">${st.lastReviewed ? "📅 " + st.lastReviewed : "—"}</div>
+    </div>
+  </div>`;
+      }
+
+      function escapeHtml(s) {
+        return (s || "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function escapeAttr(s) {
+        return escapeHtml(s);
+      }
+
+      /* =====================================================================
+   QUIZ LOG
+===================================================================== */
+      function suggestStatusFromPct(pct) {
+        if (pct >= 85) return "mastered";
+        if (pct >= 65) return "good";
+        return "weak";
+      }
+      function renderQuizLog(LIVE) {
+        const sessions = appState.sessions
+          .slice()
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        let html = `<div class="source-head"><h2>📝 Quiz Log — تحليل شامل</h2><div class="dash-sub" style="margin-top:6px">سجّل نتيجة كل كويز، وقيّم كل موضوع مرتبط بيها في نفس المكان — من غير ما ترجع تدور عليه في الشيتات.</div>
+    <div class="quick-actions" style="margin-top:12px"><button class="btn small primary" id="newSessionBtn">+ جلسة جديدة (يدوي)</button></div></div>`;
+        html += `<div class="qlog-summary">`;
+        Object.keys(SOURCE_META).forEach((src) => {
+          const srcSessions = sessions.filter(
+            (s) => s.src === src && Number(s.total) > 0,
+          );
+          if (!srcSessions.length) {
+            html += `<div class="qlog-sum-card"><h4>${SOURCE_META[src].label}</h4><div class="dash-sub">لسه مفيش جلسات مسجلة</div></div>`;
+          } else {
+            const avg = Math.round(
+              srcSessions.reduce(
+                (a, s) => a + (Number(s.correct) / Number(s.total)) * 100,
+                0,
+              ) / srcSessions.length,
+            );
+            html += `<div class="qlog-sum-card"><h4>${SOURCE_META[src].label}</h4><div class="val">${avg}%</div><div class="dash-sub">متوسط ${srcSessions.length} جلسة</div></div>`;
+          }
+        });
+        html += `</div>`;
+        if (!sessions.length) {
+          html += `<div class="empty-state">لسه مفيش جلسات. أفضل طريقة تبدأ بيها: حدد مواضيع من أي شيت، وادوس "💾 احفظ كجلسة" في الـ Quiz Builder تحت — كده الجلسة هتيجي معاها المواضيع مربوطة تلقائي.</div>`;
+        } else {
+          sessions.forEach((s) => (html += renderSessionCard(s, LIVE)));
+        }
+        return html;
+      }
+      function renderSessionCard(s, LIVE) {
+        const correct = Number(s.correct) || 0,
+          total = Number(s.total) || 0;
+        const pct = total ? Math.round((correct / total) * 100) : null;
+        const pctColor =
+          pct === null
+            ? "var(--muted)"
+            : pct >= 80
+              ? "var(--mastered)"
+              : pct >= 60
+                ? "var(--good)"
+                : "var(--weak)";
+        const topicIds = s.topicIds || [];
+
+        let linkedHtml = "";
+        if (topicIds.length) {
+          const suggestion = pct !== null ? suggestStatusFromPct(pct) : null;
+          linkedHtml += `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-soft);">`;
+          linkedHtml += `<label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); display:block; margin-bottom:8px;">📊 قيّم كل موضوع مرتبط بالجلسة دي:</label>`;
+
+          linkedHtml += `<div class="ai-box">`;
+          if (s.aiState === "loading") {
+            linkedHtml += `<span class="dash-sub">🧠 Gemini بيحلل الملاحظات دلوقتي...</span>`;
+          } else if (s.aiState === "ratelimited") {
+            linkedHtml += `<span style="color:var(--good); font-size:12px;">⏳ ${escapeHtml(s.aiError || "الليميت خلص")} — هيعيد المحاولة تلقائيًا خلال <span class="countdown-text" id="aiCountdown-${s.id}">...</span></span>
+        <div class="edit-form-actions" style="margin-top:8px;">
+          <button class="btn small" data-ai-retry-now="${s.id}">🔄 حاول دلوقتي</button>
+          <button class="btn small" data-ai-cancel="${s.id}">✍️ قيّم يدوي بدل كده</button>
+        </div>`;
+          } else if (s.aiState === "error") {
+            linkedHtml += `<span style="color:var(--weak); font-size:12px;">⚠️ ${escapeHtml(s.aiError || "حصل خطأ")}</span>
+        <div class="edit-form-actions" style="margin-top:8px;"><button class="btn small" data-ai-analyze="${s.id}">🔄 حاول تاني</button></div>`;
+          } else if (s.aiAnalysis && s.aiAnalysis.ratings) {
+            linkedHtml += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:11.5px; color:var(--accent);">🧠 تحليل Gemini جاهز</span>
+        <div style="display:flex; gap:8px;"><button class="btn small primary" data-apply-ai="${s.id}">✅ طبّق كل اقتراحات AI</button><button class="btn small" data-ai-analyze="${s.id}">🔄 حلل تاني</button></div>
+      </div>`;
+            s.aiAnalysis.ratings.forEach((r) => {
+              const t = LIVE.byId[r.id];
+              if (!t) return;
+              linkedHtml += `<div class="ai-rating-row">
+          <div><div style="font-size:12.5px;"><span class="src-badge">${SOURCE_META[t.src].short}</span>${escapeHtml(t.topic)}</div><div class="ai-reason">${escapeHtml(r.reason || "")}</div></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span class="src-badge" style="color:var(--good); background:var(--good-dim);">${STATUS_LABEL[r.status] || r.status}</span><button class="btn small" data-apply-single-ai="${s.id}" data-tid="${r.id}" data-status="${r.status}">تطبيق</button></div>
+        </div>`;
+            });
+          } else {
+            linkedHtml += `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <span class="dash-sub">🧠 خلّي Gemini يقرا ملاحظاتك ويوزع التقييم بنفسه على كل موضوع</span>
+        <button class="btn small primary" data-ai-analyze="${s.id}">🧠 حلل بالـ Gemini AI</button>
+      </div>`;
+          }
+          linkedHtml += `</div>`;
+
+          if (suggestion) {
+            linkedHtml += `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; background:var(--panel2); border:1px solid var(--border-soft); border-radius:8px; padding:8px 10px;">
+        <span style="font-size:11.5px; color:var(--muted);">⚡ اقتراح سريع (بدون AI) بناءً على ${pct}%: <b style="color:var(--accent)">${STATUS_LABEL[suggestion]}</b> لكل المواضيع دي</span>
+        <button class="btn small" data-apply-suggestion="${s.id}" data-suggestion="${suggestion}">تطبيق على الكل</button>
+      </div>`;
+          }
+          topicIds.forEach((tid) => {
+            const t = LIVE.byId[tid];
+            if (!t) {
+              linkedHtml += `<div class="topic-row" style="padding:8px 0; opacity:0.6;"><div class="topic-main"><div class="topic-desc">(موضوع اتمسح من القايمة)</div></div></div>`;
+              return;
+            }
+            const st = ensureTopicState(tid);
+            linkedHtml += `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--border-soft); flex-wrap:wrap;">
+        <div style="font-size:12.5px;"><span class="src-badge">${SOURCE_META[t.src].short}</span>${escapeHtml(t.topic)}</div>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">${STATUS_ORDER.map((stt) => `<button class="status-btn sel-${stt} ${st.status === stt ? "active" : ""}" data-session-rate="${s.id}" data-tid="${tid}" data-status="${stt}">${STATUS_LABEL[stt]}</button>`).join("")}</div>
+      </div>`;
+          });
+          linkedHtml += `</div>`;
+        }
+
+        return `<div class="session-card ${s.draft ? "draft" : ""}" id="session-${s.id}" data-id="${s.id}">
+    <div class="session-top">
+      <input type="date" data-field="date" data-id="${s.id}" value="${s.date}">
+      <select data-field="src" data-id="${s.id}">${Object.keys(SOURCE_META)
+        .map(
+          (k) =>
+            `<option value="${k}" ${s.src === k ? "selected" : ""}>${SOURCE_META[k].label}</option>`,
+        )
+        .join("")}</select>
+      ${topicIds.length ? `<span class="file-tag" style="margin-top:0">🔗 ${topicIds.length} موضوع مربوط</span>` : ""}
+      <button class="btn small danger" data-del-session="${s.id}" style="margin-inline-start:auto">🗑 حذف</button>
+    </div>
+    <div class="score-row"><span style="font-family:var(--mono); font-size:11.5px; color:var(--muted)">الدرجة:</span>
+      <input type="number" min="0" data-field="correct" data-id="${s.id}" value="${s.correct}"> /
+      <input type="number" min="0" data-field="total" data-id="${s.id}" value="${s.total}">
+      ${pct !== null ? `<span class="score-pct" style="background:${pctColor}22; color:${pctColor}">${pct}%</span>` : ""}
+    </div>
+    <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono)">المواضيع اللي شملها الكويز:</label>
+    <textarea class="session-textarea" data-field="topics" data-id="${s.id}">${escapeHtml(s.topics)}</textarea>
+    <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">الصق هنا الكويز كامل لو متاح (الأسئلة + الإجابات الصح + علامة صح/غلط/سكيب لكل سؤال) — ده بيخلي تحليل الـ AI أدق بكتير من الملاحظات لوحدها:</label>
+    <textarea class="session-textarea" data-field="rawText" data-id="${s.id}" placeholder="اختياري: انسخ نص الكويز كامل هنا (زي ما بيطلع من الموقع)، بالأسئلة والاختيارات والإجابة الصح، وحدد جنبها انت جاوبت صح ولا غلط ولا سكبتها">${escapeHtml(s.rawText || "")}</textarea>
+    <label style="font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:8px; display:block">الأسئلة اللي غلطت فيها / ملاحظات (لو معندكش النص الكامل فوق، اكتب هنا بالتفصيل):</label>
+    <textarea class="session-textarea" data-field="notes" data-id="${s.id}">${escapeHtml(s.notes)}</textarea>
+    ${linkedHtml}
+  </div>`;
+      }
+      function attachQuizLogListeners(LIVE) {
+        const newBtn = document.getElementById("newSessionBtn");
+        if (newBtn)
+          newBtn.addEventListener("click", () => createSession("hcia", "", []));
+        document.querySelectorAll("[data-del-session]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            showConfirmDialog(
+              "تمسح الجلسة دي؟ الخطوة دي مش هترجع فيها.",
+              () => {
+                appState.sessions = appState.sessions.filter(
+                  (s) => s.id !== btn.dataset.delSession,
+                );
+                saveState(true);
+                render();
+              },
+            ),
+          );
+        });
+        document.querySelectorAll("[data-field]").forEach((el) => {
+          el.addEventListener("change", () => {
+            const s = appState.sessions.find((x) => x.id === el.dataset.id);
+            if (!s) return;
+            s[el.dataset.field] = el.value;
+            s.draft = false;
+            saveState(true);
+            if (el.dataset.field === "correct" || el.dataset.field === "total")
+              render();
+          });
+        });
+        document.querySelectorAll("[data-session-rate]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setTopicStatus(btn.dataset.tid, btn.dataset.status);
+            saveState(true);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-apply-suggestion]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const s = appState.sessions.find(
+              (x) => x.id === btn.dataset.applySuggestion,
+            );
+            if (!s) return;
+            (s.topicIds || []).forEach((tid) =>
+              setTopicStatus(tid, btn.dataset.suggestion),
+            );
+            saveState(true);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-ai-analyze]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            analyzeSessionWithGemini(btn.dataset.aiAnalyze),
+          );
+        });
+        document.querySelectorAll("[data-ai-retry-now]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            clearAiRetry(btn.dataset.aiRetryNow);
+            analyzeSessionWithGemini(btn.dataset.aiRetryNow);
+          });
+        });
+        document.querySelectorAll("[data-ai-cancel]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const s = appState.sessions.find(
+              (x) => x.id === btn.dataset.aiCancel,
+            );
+            if (!s) return;
+            clearAiRetry(s.id);
+            s.aiState = null;
+            s.aiError = "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-apply-ai]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const s = appState.sessions.find(
+              (x) => x.id === btn.dataset.applyAi,
+            );
+            if (!s || !s.aiAnalysis) return;
+            s.aiAnalysis.ratings.forEach((r) => setTopicStatus(r.id, r.status));
+            saveState(true);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-apply-single-ai]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setTopicStatus(btn.dataset.tid, btn.dataset.status);
+            saveState(true);
+            render();
+          });
+        });
+      }
+      function createSession(src, topicsStr, topicIds) {
+        const s = {
+          id: "s" + Date.now() + Math.random().toString(36).slice(2, 7),
+          date: todayStr(),
+          src,
+          topics: topicsStr,
+          topicIds: topicIds || [],
+          correct: "",
+          total: "",
+          notes: "",
+          rawText: "",
+          draft: true,
+          createdAt: Date.now(),
+        };
+        appState.sessions.push(s);
+        saveState(true);
+        activeTab = "quizlog";
+        searchQuery = "";
+        document.getElementById("searchInput").value = "";
+        render();
+        setTimeout(() => {
+          const card = document.getElementById("session-" + s.id);
+          if (card) {
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            const inp = card.querySelector("[data-field=correct]");
+            if (inp) inp.focus();
+          }
+        }, 60);
+      }
+
+      /* =====================================================================
+   QUESTION BANK — parses the pasted "full quiz text" of every session
+   into individual question cards (question + choices + correct answer +
+   hint/rationale), so every quiz you've logged shows up as one running
+   archive of Q&A you can browse and re-study, in the same review-style
+   layout as the quiz app screenshots.
+===================================================================== */
+      function cleanQuizMd(s) {
+        if (!s) return "";
+        return s
+          .replace(/\\_/g, "_")
+          .replace(/\\times/g, "×")
+          .replace(/\\%/g, "%")
+          .replace(/\$/g, "")
+          .replace(/\*\*/g, "")
+          .trim();
+      }
+
+      /* Parses the markdown quiz format:
+   ## N. Question text
+   > 💡 **Hint:** ...
+   - **A.** choice
+   - **B.** choice
+   > **Answer:** X
+   > **Rationale:** ...
+   Returns [] if the text doesn't look like this format at all. */
+      function parseQuizMarkdown(rawText) {
+        if (!rawText || !rawText.trim()) return [];
+        const text = rawText.replace(/\r\n/g, "\n");
+        const qRegex = /^##\s*(\d+)\.\s*(.+)$/gm;
+        const starts = [];
+        let m;
+        while ((m = qRegex.exec(text)) !== null) {
+          starts.push({
+            num: parseInt(m[1], 10),
+            qtext: cleanQuizMd(m[2]),
+            index: m.index,
+            bodyStart: qRegex.lastIndex,
+          });
+        }
+        if (!starts.length) return [];
+        const questions = [];
+        for (let i = 0; i < starts.length; i++) {
+          const block = text.slice(
+            starts[i].bodyStart,
+            i + 1 < starts.length ? starts[i + 1].index : text.length,
+          );
+          const hintM = block.match(/Hint:\*\*\s*(.+)/);
+          const answerM = block.match(/Answer:\*\*\s*([A-D])/);
+          const rationaleM = block.match(
+            /Rationale:\*\*\s*([\s\S]+?)(?:\n---|\n##|$)/,
+          );
+          const choices = [];
+          const choiceRegex = /^-\s*\*\*([A-D])\.\*\*\s*(.+)$/gm;
+          let cm;
+          while ((cm = choiceRegex.exec(block)) !== null) {
+            choices.push({ letter: cm[1], text: cleanQuizMd(cm[2]) });
+          }
+          questions.push({
+            num: starts[i].num,
+            qtext: starts[i].qtext,
+            hint: hintM ? cleanQuizMd(hintM[1]) : "",
+            choices,
+            answer: answerM ? answerM[1] : "",
+            rationale: rationaleM
+              ? cleanQuizMd(rationaleM[1]).replace(/\n+/g, " ").trim()
+              : "",
+          });
+        }
+        return questions;
+      }
+
+      /* Best-effort auto-detection of which question numbers the student marked
+   wrong/skipped, scanning both the pasted raw text and the freeform notes
+   for phrases like "wrong in question number 6,7,10" / "skipped number 24"
+   (English or Arabic). This is only a starting default — never trusted
+   blindly — the student can correct any question's status by hand, and
+   that manual choice always wins over this heuristic afterward. */
+      function extractNumberList(str) {
+        return (str.match(/\d+/g) || []).map((n) => parseInt(n, 10));
+      }
+      function detectAutoStatus(rawText, notes) {
+        const combined = [rawText || "", notes || ""].join("\n");
+        const wrong = new Set();
+        const skipped = new Set();
+        const wrongPatterns = [
+          /wrong[^\d]{0,40}(\d+(?:\s*,\s*\d+)*)/gi,
+          /(?:غلط[تي]?|أخطأت|اخطات)[^\d]{0,40}(\d+(?:\s*,\s*\d+)*)/gi,
+        ];
+        const skipPatterns = [
+          /skip(?:ped)?[^\d]{0,40}(\d+(?:\s*,\s*\d+)*)/gi,
+          /(?:سكب[تي]?|تخط[يت]ت|اتخط[يت]ت)[^\d]{0,40}(\d+(?:\s*,\s*\d+)*)/gi,
+        ];
+        wrongPatterns.forEach((re) => {
+          let m;
+          while ((m = re.exec(combined)) !== null) {
+            extractNumberList(m[1]).forEach((n) => wrong.add(n));
+          }
+        });
+        skipPatterns.forEach((re) => {
+          let m;
+          while ((m = re.exec(combined)) !== null) {
+            extractNumberList(m[1]).forEach((n) => skipped.add(n));
+          }
+        });
+        skipped.forEach((n) => wrong.delete(n)); // skipped takes precedence if a number matched both loosely
+        return { wrong, skipped };
+      }
+
+      function ensureQuestionStatus(s) {
+        if (!s.questionStatus) s.questionStatus = {};
+        return s.questionStatus;
+      }
+      function getQuestionStatus(s, qnum, autoWrong, autoSkipped) {
+        const manual = (s.questionStatus || {})[qnum];
+        if (manual) return manual;
+        if (autoSkipped.has(qnum)) return "skipped";
+        if (autoWrong.has(qnum)) return "wrong";
+        return "correct";
+      }
+      const QB_STATUS_LABEL = {
+        correct: "✅ صح",
+        wrong: "❌ غلط",
+        skipped: "⏭ سكيب",
+      };
+      const QB_STATUS_ORDER = ["correct", "wrong", "skipped"];
+
+      let qbSearchQuery = "";
+
+      function renderQuestionCard(s, q, status) {
+        const badge = `<span class="qb-badge ${status}">${QB_STATUS_LABEL[status]}</span>`;
+        const choicesHtml = q.choices
+          .map(
+            (c) =>
+              `<div class="qb-choice ${c.letter === q.answer ? "correct" : ""}">${c.letter === q.answer ? "✓ " : ""}${c.letter}. ${escapeHtml(c.text)}</div>`,
+          )
+          .join("");
+        const statusBtns = QB_STATUS_ORDER.map(
+          (st) =>
+            `<button class="qb-status-btn ${status === st ? "active-" + st : ""}" data-qb-status="${st}" data-qb-session="${s.id}" data-qb-qnum="${q.num}">${QB_STATUS_LABEL[st]}</button>`,
+        ).join("");
+        return `<div class="qb-card" data-qb-card="${s.id}-${q.num}">
+    <div class="qb-card-top">
+      <div><div class="qb-qnum">سؤال ${q.num}</div><div class="qb-qtext">${escapeHtml(q.qtext)}</div></div>
+      ${badge}
+    </div>
+    ${choicesHtml}
+    ${q.hint ? `<div class="qb-hint">💡 ${escapeHtml(q.hint)}</div>` : ""}
+    ${q.rationale ? `<div class="qb-rationale">${escapeHtml(q.rationale)}</div>` : ""}
+    <div class="qb-status-row">${statusBtns}</div>
+  </div>`;
+      }
+
+      function renderQuestionBank(LIVE) {
+        const sessions = appState.sessions
+          .slice()
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        let html = `<div class="source-head"><h2>📚 بنك الأسئلة — كل الكويزات اللي حطيتها</h2>
+    <div class="dash-sub" style="margin-top:6px">كل كويز لصقته نصه الكامل في 📝 Quiz Log بيتحول هنا لسلسلة أسئلة تقدر تراجعها، زي الـ Review في الكويز نفسه. اللي اتحدد غلط/سكيب بيتحدد تلقائي من كلامك، وتقدر تغيّره يدوي بالأزرار تحت كل سؤال.</div></div>
+    <input type="text" class="qb-search" id="qbSearchInput" placeholder="دور في كل الأسئلة اللي حطيتها (بالعربي أو الإنجليزي)..." value="${escapeAttr(qbSearchQuery)}">`;
+
+        const q = qbSearchQuery.trim().toLowerCase();
+        let anyParsed = false;
+        let anySessions = false;
+
+        sessions.forEach((s) => {
+          const parsed = parseQuizMarkdown(s.rawText);
+          if (!parsed.length) return;
+          anySessions = true;
+          const auto = detectAutoStatus(s.rawText, s.notes);
+          let cards = parsed.map((qq) => ({
+            qq,
+            status: getQuestionStatus(s, qq.num, auto.wrong, auto.skipped),
+          }));
+          if (q) {
+            cards = cards.filter(
+              ({ qq }) =>
+                (
+                  qq.qtext +
+                  " " +
+                  qq.choices.map((c) => c.text).join(" ") +
+                  " " +
+                  qq.rationale
+                )
+                  .toLowerCase()
+                  .indexOf(q) !== -1,
+            );
+          }
+          if (!cards.length) return;
+          anyParsed = true;
+          const wrongCount = cards.filter((c) => c.status === "wrong").length;
+          const skipCount = cards.filter((c) => c.status === "skipped").length;
+          const meta = SOURCE_META[s.src] ? SOURCE_META[s.src].label : s.src;
+          html += `<details class="qb-session" open>
+      <summary>
+        <div><div class="qb-session-title">${escapeHtml(s.topics || "كويز بدون اسم")} — ${s.date || ""}</div>
+        <div class="qb-session-sub">${meta} · ${parsed.length} سؤال · ${s.correct || "?"}/${s.total || "?"} · ${wrongCount} غلط · ${skipCount} سكيب</div></div>
+      </summary>
+      <div class="qb-session-body">${cards.map(({ qq, status }) => renderQuestionCard(s, qq, status)).join("")}</div>
+    </details>`;
+        });
+
+        if (!anySessions) {
+          html += `<div class="empty-state">لسه مفيش أي جلسة فيها نص كويز كامل ملزوق. روح لـ 📝 Quiz Log وحط نص الكويز كامل في خانة "الصق هنا الكويز كامل" في أي جلسة — هيتحول تلقائي لأسئلة هنا.</div>`;
+        } else if (!anyParsed) {
+          html += `<div class="empty-state">مفيش أسئلة مطابقة للبحث.</div>`;
+        }
+        return html;
+      }
+
+      function attachQuestionBankListeners() {
+        const input = document.getElementById("qbSearchInput");
+        if (input) {
+          input.addEventListener("input", () => {
+            const pos = input.selectionStart;
+            qbSearchQuery = input.value;
+            render();
+            const fresh = document.getElementById("qbSearchInput");
+            if (fresh) {
+              fresh.focus();
+              try {
+                fresh.setSelectionRange(pos, pos);
+              } catch (e) {}
+            }
+          });
+        }
+        document.querySelectorAll("[data-qb-status]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const s = appState.sessions.find(
+              (x) => x.id === btn.dataset.qbSession,
+            );
+            if (!s) return;
+            const qs = ensureQuestionStatus(s);
+            qs[btn.dataset.qbQnum] = btn.dataset.qbStatus;
+            saveState(true);
+            render();
+          });
+        });
+      }
+
+      /* =====================================================================
+   ROW / DASHBOARD / ADD-FORM / COLLAPSE EVENT WIRING
+===================================================================== */
+      function markReviewedToday(id) {
+        if (appState.reviewedToday.date !== todayStr())
+          appState.reviewedToday = { date: todayStr(), ids: [] };
+        if (appState.reviewedToday.ids.indexOf(id) === -1)
+          appState.reviewedToday.ids.push(id);
+      }
+      function setTopicStatus(id, status) {
+        const st = ensureTopicState(id);
+        st.status = status;
+        st.lastReviewed = status === "not_started" ? "" : todayStr();
+        if (status !== "not_started") markReviewedToday(id);
+      }
+
+      function attachRowListeners(LIVE) {
+        document.querySelectorAll(".status-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setTopicStatus(btn.dataset.id, btn.dataset.status);
+            saveState(true);
+            render();
+          });
+        });
+        document.querySelectorAll(".notes-input").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            ensureTopicState(inp.dataset.id).note = inp.value;
+            saveState(true);
+          });
+        });
+        document.querySelectorAll(".select-box").forEach((cb) => {
+          cb.addEventListener("change", () => {
+            if (cb.checked) selected.add(cb.dataset.id);
+            else selected.delete(cb.dataset.id);
+            renderQuizBuilder(LIVE);
+          });
+        });
+        document.querySelectorAll("[data-quick]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const src = btn.dataset.src,
+              mode = btn.dataset.quick;
+            LIVE.bySrc[src].forEach((t) => {
+              if (mode === "clear") {
+                selected.delete(t.id);
+              } else if (ensureTopicState(t.id).status === mode) {
+                selected.add(t.id);
+              }
+            });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-edit]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            editingId = btn.dataset.edit;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cancel-edit]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            editingId = null;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-save-edit]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.dataset.saveEdit;
+            const row = document.getElementById("row-" + id);
+            const newTopic = row.querySelector(".ef-topic").value.trim();
+            const newDesc = row.querySelector(".ef-desc").value.trim();
+            const t = LIVE.byId[id];
+            if (t.custom) {
+              const arr = appState.customTopics[t.src];
+              const item = arr.find((x) => x.id === id);
+              if (item) {
+                item.topic = newTopic || item.topic;
+                item.desc = newDesc;
+              }
+            } else {
+              appState.topicOverrides[id] = {
+                topic: newTopic || t.topic,
+                desc: newDesc,
+              };
+            }
+            editingId = null;
+            saveState(true);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-delete]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            showConfirmDialog(
+              "تمسح الموضوع ده من القايمة؟ تقدر تسترجعه بس لو عندك نسخة احتياطية.",
+              () => {
+                const id = btn.dataset.delete;
+                if (appState.deletedIds.indexOf(id) === -1)
+                  appState.deletedIds.push(id);
+                selected.delete(id);
+                saveState(true);
+                render();
+              },
+            ),
+          );
+        });
+      }
+
+      function attachDashboardListeners(LIVE) {
+        document.querySelectorAll("[data-goto]").forEach((card) => {
+          card.addEventListener("click", (e) => {
+            if (e.target.closest("[data-goto-topic]")) return;
+            activeTab = card.dataset.goto;
+            searchQuery = "";
+            document.getElementById("searchInput").value = "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-goto-topic]").forEach((led) => {
+          led.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = led.dataset.gotoTopic;
+            const topic = LIVE.byId[id];
+            if (!topic) return;
+            activeTab = topic.src;
+            searchQuery = "";
+            document.getElementById("searchInput").value = "";
+            render();
+            setTimeout(() => {
+              const row = document.getElementById("row-" + id);
+              if (row) {
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+                row.classList.add("highlight");
+                setTimeout(() => row.classList.remove("highlight"), 1600);
+              }
+            }, 60);
+          });
+        });
+      }
+
+      function attachCollapseListeners() {
+        document.querySelectorAll("[data-expand-all]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll("#mainContainer details.category")
+              .forEach((d) => (d.open = true));
+          });
+        });
+        document.querySelectorAll("[data-collapse-all]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll("#mainContainer details.category")
+              .forEach((d) => (d.open = false));
+          });
+        });
+        document.querySelectorAll("[data-new-cat]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activeAddForm = { src: btn.dataset.newCat, newCat: true };
+            render();
+          });
+        });
+      }
+
+      function attachAddFormListeners(LIVE) {
+        document.querySelectorAll("[data-add-topic-src]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activeAddForm = {
+              src: btn.dataset.addTopicSrc,
+              cat: btn.dataset.addTopicCat,
+            };
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cancel-add]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activeAddForm = null;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-save-add]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const src = btn.dataset.saveAdd;
+            const wrap = btn.closest(".add-form");
+            const isNewCat = activeAddForm.newCat === true;
+            const cat = isNewCat
+              ? wrap.querySelector(".af-cat").value.trim()
+              : btn.dataset.cat;
+            const topicVal = wrap.querySelector(".af-topic").value.trim();
+            const descVal = wrap.querySelector(".af-desc").value.trim();
+            if (!topicVal || (isNewCat && !cat)) {
+              flashToast("⚠️ اكتب اسم الموضوع (والقسم لو جديد)");
+              return;
+            }
+            const id = "custom-" + src + "-" + Date.now();
+            if (!appState.customTopics[src]) appState.customTopics[src] = [];
+            appState.customTopics[src].push({
+              id,
+              cat,
+              topic: topicVal,
+              desc: descVal,
+            });
+            appState.topics[id] = {
+              status: "not_started",
+              note: "",
+              lastReviewed: "",
+            };
+            activeAddForm = null;
+            saveState(true);
+            render();
+            setTimeout(() => {
+              const row = document.getElementById("row-" + id);
+              if (row) {
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+                row.classList.add("highlight");
+                setTimeout(() => row.classList.remove("highlight"), 1600);
+              }
+            }, 80);
+          });
+        });
+      }
+
+      /* =====================================================================
+   QUIZ PROMPT BUILDER — one merged prompt
+===================================================================== */
+      function arabicJoin(list) {
+        if (list.length === 1) return list[0];
+        if (list.length === 2) return list[0] + " و" + list[1];
+        return list.slice(0, -1).join("، ") + "، و" + list[list.length - 1];
+      }
+      let fileOverrides = {};
+
+      function renderQuizBuilder(LIVE) {
+        const body = document.getElementById("quizBody");
+        document.getElementById("selCount").textContent = selected.size;
+        if (selected.size === 0) {
+          body.innerHTML = `<div class="empty-state">حدد مواضيع بعلامة ✓ من أي شيت عشان تبني برومبت كويز واحد جاهز تنسخه في NotebookLM.</div>`;
+          return;
+        }
+
+        const bySrc = {};
+        selected.forEach((id) => {
+          const t = LIVE.byId[id];
+          if (!t) return;
+          (bySrc[t.src] = bySrc[t.src] || []).push(t);
+        });
+
+        let groupsHtml = "";
+        const combinedParts = [];
+        Object.keys(bySrc).forEach((src) => {
+          const topics = bySrc[src];
+          const meta = SOURCE_META[src];
+          const fileName =
+            fileOverrides[src] !== undefined ? fileOverrides[src] : meta.file;
+          const allGood = topics.every((t) => {
+            const s = ensureTopicState(t.id).status;
+            return s === "good" || s === "mastered";
+          });
+          const suggestedDiff = allGood
+            ? "Hard (تأكيد إتقان)"
+            : "Medium (تشخيص أول مرة)";
+          const suggestedCount = Math.min(20, Math.max(5, topics.length * 3));
+          const topicNames = arabicJoin(topics.map((t) => t.topic));
+          const promptLine = `من ملف ${fileName} بس، ركّز على ${topicNames}`;
+          combinedParts.push(
+            `📌 ${meta.label} (${topics.length} موضوع)\nDifficulty المقترح: ${suggestedDiff} | عدد الأسئلة المقترح: ${suggestedCount}\n${promptLine}`,
+          );
+          groupsHtml += `<div class="group-strip" data-block="${src}">
+      <div class="group-strip-top"><span class="group-meta">📌 ${meta.label} — ${topics.length} موضوع</span><button class="btn small" data-save-session="${src}">💾 احفظ كجلسة (بعد الكويز)</button></div>
+      <input class="file-edit" data-file-input="${src}" value="${escapeAttr(fileName)}" placeholder="اسم الملف">
+    </div>`;
+        });
+        const combinedText = combinedParts.join("\n\n");
+        body.innerHTML =
+          groupsHtml +
+          `<div class="combined-wrap"><div class="combined-top"><span class="prompt-meta" style="font-family:var(--mono); font-size:12px; color:var(--muted)">البرومبت الكامل:</span><button class="btn small primary" id="copyAllBtn">📋 نسخ البرومبت كامل</button></div><div class="prompt-text" id="combinedPromptText">${escapeHtml(combinedText)}</div></div>`;
+
+        body.querySelectorAll("[data-file-input]").forEach((inp) => {
+          inp.addEventListener("input", () => {
+            fileOverrides[inp.dataset.fileInput] = inp.value;
+            renderQuizBuilder(LIVE);
+          });
+        });
+        body.querySelectorAll("[data-save-session]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const src = btn.dataset.saveSession;
+            createSession(
+              src,
+              bySrc[src].map((t) => t.topic).join("، "),
+              bySrc[src].map((t) => t.id),
+            );
+          });
+        });
+        document
+          .getElementById("copyAllBtn")
+          .addEventListener("click", () =>
+            copyToClipboard(
+              document.getElementById("combinedPromptText").textContent,
+            ),
+          );
+      }
+      function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard
+            .writeText(text)
+            .then(() => flashToast("📋 اتنسخ! الصقه في NotebookLM"))
+            .catch(() => fallbackCopy(text));
+        } else {
+          fallbackCopy(text);
+        }
+      }
+      function fallbackCopy(text) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          flashToast("📋 اتنسخ!");
+        } catch (e) {
+          flashToast("⚠️ متقدرش أنسخ، انسخ يدوي");
+        }
+        document.body.removeChild(ta);
+      }
+
+      /* =====================================================================
+   TOP CONTROLS
+===================================================================== */
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        editingId = null;
+        activeAddForm = null;
+        render();
+      });
+      document.getElementById("quizHandle").addEventListener("click", () => {
+        document.getElementById("quizBar").classList.toggle("expanded");
+      });
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const blob = new Blob([JSON.stringify(appState, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "otx_selfcheck_backup_" + todayStr() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        flashToast("⬇ اتحملت نسخة احتياطية");
+      });
+      document
+        .getElementById("importBtn")
+        .addEventListener("click", () =>
+          document.getElementById("importFile").click(),
+        );
+      document.getElementById("importFile").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const imported = JSON.parse(ev.target.result);
+            const base = freshDefaultAppState();
+            appState = Object.assign(base, {
+              topics: Object.assign(base.topics, imported.topics || {}),
+              sessions: imported.sessions || [],
+              customTopics: imported.customTopics || base.customTopics,
+              topicOverrides: imported.topicOverrides || {},
+              deletedIds: imported.deletedIds || [],
+              reviewedToday: imported.reviewedToday || { date: "", ids: [] },
+            });
+            saveState(false);
+            render();
+            flashToast("⬆ اتستوردت الداتا بنجاح");
+          } catch (err) {
+            flashToast("⚠️ الملف مش صالح");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+      document.getElementById("resetBtn").addEventListener("click", () =>
+        showConfirmDialog(
+          "متأكد عايز تمسح كل تقدمك وملاحظاتك وجلساتك خالص وترجع لصفحة بيضاء بالكامل؟ الخطوة دي مش هترجع فيها.",
+          () => {
+            appState = blankAppState();
+            selected.clear();
+            saveState(true);
+            render();
+          },
+        ),
+      );
+
+      /* =====================================================================
+   GEMINI AI — reads a session's score + wrong-answer notes and returns
+   a per-topic status suggestion with a one-line reason. Kept completely
+   separate from appState/export: the API key lives in its own
+   localStorage key only, so it is never included in your JSON backups.
+===================================================================== */
+      const GEMINI_CFG_KEY = "otx_gemini_cfg_v1";
+      function getGeminiConfig() {
+        try {
+          const raw = localStorage.getItem(GEMINI_CFG_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return { apiKey: "", model: "gemini-3.5-flash" };
+      }
+      function saveGeminiConfig(cfg) {
+        try {
+          localStorage.setItem(GEMINI_CFG_KEY, JSON.stringify(cfg));
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function buildGeminiPrompt(topics, correct, total, notes, rawText) {
+        const topicLines = topics
+          .map((t) => `- id:"${t.id}" | ${t.topic}`)
+          .join("\n");
+        const hasRaw = !!(rawText && rawText.trim());
+        const skipped = (Number(total) || 0) - (Number(correct) || 0);
+
+        const rawBlock = hasRaw
+          ? `Full quiz text as pasted by the student (question numbers, choices, marked correct answers, and their own right/wrong/skip status if visible in the text). This is GROUND TRUTH — prefer it over the notes below whenever both are present and they conflict:
+"""${rawText}"""`
+          : `(no full quiz text was pasted — only the notes below are available, so extraction is limited to what's explicitly written there)`;
+
+        return `You are helping a student self-assess their knowledge after a quiz on optical transmission engineering (Huawei HCIA/HCIP + optical courses).
+
+They were quizzed on exactly these topics (this is the COMPLETE and ONLY valid list of topic ids — do not invent new ones, do not merge two of them together, do not add a topic id that isn't in this list even if the quiz content suggests one):
+${topicLines}
+
+Score: ${correct} out of ${total} correct (so ${skipped >= 0 ? skipped : "an unknown number of"} question(s) were wrong or skipped).
+
+${rawBlock}
+
+Their freeform notes (may be in Arabic, English, or mixed, may be empty if the full quiz text above already covers everything):
+"""${notes || "(no notes provided)"}"""
+
+STEP 0 — Extract every wrong/skipped question (do this silently before writing your answer, do not output this step):
+- If the full quiz text is present: go question by question. For each question the student got wrong OR skipped, record its number, what concept/byte/alarm/signal/structure it was actually testing (using only terms that literally appear in that question's text, choices, or rationale — never a term you're guessing), and what the correct answer was. A skipped question is extracted exactly the same way as a wrong one — never treat "skipped" as neutral or ignore it just because no wrong choice was picked. Do not rely on the student's own notes to tell you which questions were wrong if the full quiz text already shows Right/Wrong/Skipped marks — count those directly and independently; if your count of wrong+skipped from the text doesn't match "${skipped}", recount before proceeding.
+- If only notes are present: list every distinct mistake mentioned, using ONLY the exact technical terms that literally appear in the notes text. If the notes name two specific things being confused (e.g. "X instead of Y"), record exactly those two names. Do not substitute, guess, or infer a different term that sounds similar but isn't written in the notes — if unsure which exact term applies, describe the mistake generically instead of naming a specific term.
+- Never invent a mistake, a wrong-answer choice, or a reason that isn't grounded in the pasted quiz text or the notes. If you cannot tell why a question was missed, say so generically rather than fabricating a plausible-sounding explanation.
+
+STEP 1 — Topic matching:
+For each item extracted in step 0, match it to the SINGLE most specific topic id in the list above, based on what that specific question was actually testing. Topics can look adjacent but are NOT interchangeable — e.g. a question about OTUCn/beyond-100G frame structure belongs ONLY to a topic id about OTUCn/Beyond-100G if one exists in the list, never to a general "OTN framing structure (OTU/ODU/OPU)" topic id, even though both involve OTN framing. Do not lump a mistake into a broader/nearby topic just because it seems related — check every topic id in the list first and pick the closest match.
+Special case: if a mistake is clearly about a narrower/specialized concept (e.g. OTUCn) but NO topic id for that specialized concept exists anywhere in the list above, you must still attach it to the closest general topic id — but in that topic's "reason" you must describe it as a mistake specific to that narrower concept (e.g. "غلطة في OTUCn تحديدًا"), not as a general weakness in the broad topic itself, since most of the broad topic may still be solid. If that same broad topic id ALSO absorbs a separate, genuinely general mistake (not tied to the narrow concept), keep the two visibly distinct in the reason (e.g. two short clauses, one flagged as OTUCn-specific and one as general) rather than merging them into a single blended description that implies they're the same kind of gap.
+
+STEP 2 — Status rubric (apply per topic id, based only on the items matched to THAT id in step 1, and — when the full quiz text is present — how many total questions from that topic id you can identify in it):
+- "weak": at least one matched item shows a genuine conceptual misunderstanding — confusing two different mechanisms, functions, or definitions — OR a skipped question on that topic with no other evidence the concept is solid — OR more than one wrong/skipped item out of very few questions on that topic.
+- "good": all matched items are the student slipping on a specific numeric or positional detail (e.g. an exact column/byte range, a specific number) while their reasoning about the general principle was right — no conceptual confusion, and it's a single isolated slip relative to how many questions on that topic they got right.
+- If a topic id has multiple matched items of different severity, the status is "weak" (conceptual/skip issues dominate), but the reason must still name each distinct item separately rather than blending them into one vague description — do not describe a numeric slip as "conceptual" just because it shares a topic id with a real conceptual error.
+- "mastered": at least one question you can point to in the raw quiz text belongs to this topic AND none of those questions were wrong or skipped — i.e. you have positive evidence, not just absence of evidence.
+- If a topic id has no items matched to it in step 1, first check (only when the raw quiz text is present) whether you can identify ANY question in that text that actually tests this topic at all:
+  - If you CAN identify at least one such question and it was answered correctly: status is "mastered", and the reason should reference the actual question number(s) that confirm it — never say "all questions" or "every question" if you're only pointing to one.
+  - If you CANNOT identify any question testing this topic in the quiz (it simply wasn't covered by this particular quiz): status defaults to "good", and the reason MUST say explicitly that this quiz didn't specifically test this topic and the rating is unverified/carried over, not evidence of mastery. NEVER phrase this as "answered correctly" or "mastered" or imply questions were answered when none existed — that is a fabrication.
+  - If no raw quiz text is present at all (notes-only mode), infer from the overall score: default to "good" unless the score is low enough that widespread weakness is more likely, and say in the reason that this is score-based inference, not a specific identified mistake.
+
+Respond with ONLY raw JSON (no markdown fences, no commentary), in this exact shape:
+{"ratings":[{"id":"<topic id from the list above>","status":"weak|good|mastered","reason":"one short sentence in Arabic, under 18 words, naming the exact question number(s) and mistake(s) when available, using only terms grounded in step 0 — never a term you're inferring or guessing"}]}
+
+Include every topic id from the list exactly once, and no ids that aren't in the list. Nothing else in your response.`;
+      }
+
+      function extractJson(text) {
+        if (!text) return null;
+        let cleaned = text
+          .trim()
+          .replace(/^```(json)?/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const start = cleaned.indexOf("{");
+        const end = cleaned.lastIndexOf("}");
+        if (start === -1 || end === -1) return null;
+        try {
+          return JSON.parse(cleaned.slice(start, end + 1));
+        } catch (e) {
+          return null;
+        }
+      }
+
+      const aiPendingRetry = {}; // sessionId -> {deadline, intervalId}
+
+      async function analyzeSessionWithGemini(sessionId) {
+        const s = appState.sessions.find((x) => x.id === sessionId);
+        if (!s) return;
+        const LIVE = window.__LIVE || buildLive();
+        const topics = (s.topicIds || [])
+          .map((id) => LIVE.byId[id])
+          .filter(Boolean);
+        if (!topics.length) {
+          flashToast("⚠️ الجلسة دي مش مربوطة بمواضيع محددة");
+          return;
+        }
+
+        const cfg = getGeminiConfig();
+        if (!cfg.apiKey) {
+          flashToast("⚠️ حط الـ Gemini API key الأول من ⚙️ Gemini AI فوق");
+          toggleGeminiPanel(true);
+          return;
+        }
+
+        s.aiState = "loading";
+        s.aiError = "";
+        render();
+
+        const prompt = buildGeminiPrompt(
+          topics,
+          s.correct || 0,
+          s.total || 0,
+          s.notes || "",
+          s.rawText || "",
+        );
+        const model = cfg.model || "gemini-3.5-flash";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": cfg.apiKey,
+            },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          });
+
+          if (resp.status === 429) {
+            const retryAfterHeader = resp.headers.get("Retry-After");
+            const waitSec = retryAfterHeader
+              ? parseInt(retryAfterHeader, 10)
+              : 60;
+            s.aiState = "ratelimited";
+            s.aiError = "الليميت بتاع Gemini خلص دلوقتي";
+            render();
+            scheduleAiRetry(sessionId, isNaN(waitSec) ? 60 : waitSec);
+            return;
+          }
+          if (!resp.ok) {
+            const errText = await resp.text().catch(() => "");
+            s.aiState = "error";
+            s.aiError =
+              "خطأ من Gemini (كود " +
+              resp.status +
+              "). " +
+              (errText ? errText.slice(0, 140) : "جرب تتأكد من الـ API key.");
+            render();
+            return;
+          }
+          const data = await resp.json();
+          const textOut =
+            (((data.candidates || [])[0] || {}).content || {}).parts?.[0]
+              ?.text || "";
+          const parsed = extractJson(textOut);
+          if (!parsed || !Array.isArray(parsed.ratings)) {
+            s.aiState = "error";
+            s.aiError = "الرد من Gemini مكنش JSON صالح، جرب تاني.";
+            render();
+            return;
+          }
+          s.aiState = "done";
+          s.aiError = "";
+          s.aiAnalysis = { ratings: parsed.ratings, analyzedAt: Date.now() };
+          saveState(true);
+          render();
+        } catch (err) {
+          s.aiState = "error";
+          s.aiError =
+            "فشل الاتصال بـ Gemini (ممكن مشكلة شبكة أو CORS). ممكن تستخدم التقييم اليدوي بدل كده.";
+          render();
+        }
+      }
+
+      function scheduleAiRetry(sessionId, waitSec) {
+        clearAiRetry(sessionId);
+        const deadline = Date.now() + waitSec * 1000;
+        aiPendingRetry[sessionId] = { deadline };
+        const tick = () => {
+          const el = document.getElementById("aiCountdown-" + sessionId);
+          const remaining = Math.max(
+            0,
+            Math.round((deadline - Date.now()) / 1000),
+          );
+          if (el) el.textContent = remaining + " ثانية";
+          if (remaining <= 0) {
+            clearInterval(aiPendingRetry[sessionId].intervalId);
+            delete aiPendingRetry[sessionId];
+            analyzeSessionWithGemini(sessionId);
+          }
+        };
+        aiPendingRetry[sessionId].intervalId = setInterval(tick, 1000);
+        tick();
+      }
+      function clearAiRetry(sessionId) {
+        if (aiPendingRetry[sessionId]) {
+          clearInterval(aiPendingRetry[sessionId].intervalId);
+          delete aiPendingRetry[sessionId];
+        }
+      }
+
+      function toggleGeminiPanel(forceOpen) {
+        const panel = document.getElementById("geminiPanel");
+        const shouldOpen =
+          forceOpen !== undefined
+            ? forceOpen
+            : !panel.classList.contains("open");
+        panel.classList.toggle("open", shouldOpen);
+      }
+      document
+        .getElementById("geminiSettingsBtn")
+        .addEventListener("click", () => toggleGeminiPanel());
+      (function initGeminiInputs() {
+        const cfg = getGeminiConfig();
+        document.getElementById("geminiKeyInput").value = cfg.apiKey || "";
+        document.getElementById("geminiModelInput").value =
+          cfg.model || "gemini-3.5-flash";
+        document.getElementById("geminiStatusText").textContent = cfg.apiKey
+          ? "✅ فيه مفتاح متسجل"
+          : "مفيش مفتاح لسه";
+      })();
+      document.getElementById("geminiSaveBtn").addEventListener("click", () => {
+        const apiKey = document.getElementById("geminiKeyInput").value.trim();
+        const model =
+          document.getElementById("geminiModelInput").value.trim() ||
+          "gemini-3.5-flash";
+        saveGeminiConfig({ apiKey, model });
+        document.getElementById("geminiStatusText").textContent = apiKey
+          ? "✅ اتحفظ"
+          : "مفيش مفتاح";
+        flashToast("✔ اتحفظت إعدادات Gemini (محليًا بس)");
+      });
+      document
+        .getElementById("geminiClearBtn")
+        .addEventListener("click", () => {
+          saveGeminiConfig({
+            apiKey: "",
+            model:
+              document.getElementById("geminiModelInput").value.trim() ||
+              "gemini-3.5-flash",
+          });
+          document.getElementById("geminiKeyInput").value = "";
+          document.getElementById("geminiStatusText").textContent = "اتمسح";
+          flashToast("🗑 اتمسح المفتاح");
+        });
+      document
+        .getElementById("geminiTestBtn")
+        .addEventListener("click", async () => {
+          const apiKey = document.getElementById("geminiKeyInput").value.trim();
+          const model =
+            document.getElementById("geminiModelInput").value.trim() ||
+            "gemini-3.5-flash";
+          if (!apiKey) {
+            flashToast("⚠️ اكتب المفتاح الأول");
+            return;
+          }
+          const statusEl = document.getElementById("geminiStatusText");
+          statusEl.textContent = "⏳ بيختبر الاتصال...";
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+          try {
+            const resp = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey,
+              },
+              body: JSON.stringify({
+                contents: [
+                  { parts: [{ text: "Reply with the single word: ok" }] },
+                ],
+              }),
+            });
+            if (resp.status === 429) {
+              statusEl.textContent = "⏳ الاتصال شغال بس الليميت خلص دلوقتي";
+              flashToast("الاتصال تمام، بس الليميت خلص مؤقتًا");
+              return;
+            }
+            if (!resp.ok) {
+              statusEl.textContent =
+                "❌ رد بخطأ " + resp.status + " — تأكد من المفتاح/اسم الموديل";
+              return;
+            }
+            await resp.json();
+            statusEl.textContent = "✅ الاتصال شغال تمام!";
+            flashToast("✅ Gemini شغال معاك");
+          } catch (err) {
+            statusEl.textContent =
+              "❌ فشل الاتصال (شبكة أو CORS) — جرب تاني أو قولي";
+            flashToast("⚠️ فشل الاتصال، شوف الرسالة تحت زرار الاختبار");
+          }
+        });
+
+      /* =====================================================================
+   INIT
+===================================================================== */
+      async function init() {
+        document.getElementById("mainContainer").innerHTML =
+          '<div class="empty-state">⏳ بنحمّل بياناتك...</div>';
+        await loadState();
+        render();
+      }
+      init();
+    </script>
+  </body>
+</html>
