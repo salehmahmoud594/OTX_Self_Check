@@ -1507,7 +1507,7 @@
           <input
             type="text"
             id="geminiModelInput"
-            placeholder="gemini-3.5-flash"
+            placeholder="gemini-2.0-flash"
           />
           <div class="edit-form-actions">
             <button class="btn small primary" id="geminiSaveBtn">✔ حفظ</button>
@@ -4201,7 +4201,14 @@
             : "Medium (تشخيص أول مرة)";
           const suggestedCount = Math.min(20, Math.max(5, topics.length * 3));
           const topicNames = arabicJoin(topics.map((t) => t.topic));
-          const promptLine = `من ملف ${fileName} بس، ركّز على ${topicNames}`;
+          const topicTagList = topics
+            .map((t) => `  - id:"${t.id}" → ${t.topic}`)
+            .join("\n");
+          const promptLine =
+            `من ملف ${fileName} بس، ركّز على ${topicNames}.` +
+            `\n\nمهم: بعد كل سؤال وقبل السؤال اللي بعده، اكتب على سطر منفصل:` +
+            `\n[topic: <id>]` +
+            `\nحيث <id> هو الـ id الأنسب للسؤال من القايمة دي بالظبط (لا تختار id مش موجود فيها):\n${topicTagList}`;
           combinedParts.push(
             `📌 ${meta.label} (${topics.length} موضوع)\nDifficulty المقترح: ${suggestedDiff} | عدد الأسئلة المقترح: ${suggestedCount}\n${promptLine}`,
           );
@@ -4346,7 +4353,7 @@
           const raw = localStorage.getItem(GEMINI_CFG_KEY);
           if (raw) return JSON.parse(raw);
         } catch (e) {}
-        return { apiKey: "", model: "gemini-3.5-flash" };
+        return { apiKey: "", model: "gemini-2.0-flash" };
       }
       function saveGeminiConfig(cfg) {
         try {
@@ -4367,7 +4374,7 @@
         skippedNums,
       ) {
         const topicLines = topics
-          .map((t) => `- id:"${t.id}" | ${t.topic}`)
+          .map((t) => `- id:"${t.id}" | [${t.cat}] ${t.topic}`)
           .join("\n");
         const hasRaw = !!(rawText && rawText.trim());
         const skippedCount = (Number(total) || 0) - (Number(correct) || 0);
@@ -4409,12 +4416,14 @@ STEP 0 — Extract every wrong/skipped question (do this silently before writing
 - Never invent a mistake, a wrong-answer choice, a question number, or a reason that isn't grounded in the pasted quiz text or the notes. If you cannot tell why a question was missed, say so generically rather than fabricating a plausible-sounding explanation.
 
 STEP 1 — Topic matching:
-For each item extracted in step 0, match it to the SINGLE most specific topic id in the list above, based on what that specific question was actually testing. Topics can look adjacent but are NOT interchangeable — e.g. a question about OTUCn/beyond-100G frame structure belongs ONLY to a topic id about OTUCn/Beyond-100G if one exists in the list, never to a general "OTN framing structure (OTU/ODU/OPU)" topic id, even though both involve OTN framing. Do not lump a mistake into a broader/nearby topic just because it seems related — check every topic id in the list first and pick the closest match.
-Special case: if a mistake is clearly about a narrower/specialized concept (e.g. OTUCn) but NO topic id for that specialized concept exists anywhere in the list above, you must still attach it to the closest general topic id — but in that topic's "reason" you must describe it as a mistake specific to that narrower concept (e.g. "غلطة في OTUCn تحديدًا"), not as a general weakness in the broad topic itself, since most of the broad topic may still be solid. If that same broad topic id ALSO absorbs a separate, genuinely general mistake (not tied to the narrow concept), keep the two visibly distinct in the reason (e.g. two short clauses, one flagged as OTUCn-specific and one as general) rather than merging them into a single blended description that implies they're the same kind of gap.
+- Priority rule — explicit topic tags: If a question carries an explicit tag in the format [topic: <id>] (added by NotebookLM at generation time), use that id directly as the match without re-inferring from content. Only verify that the id actually exists in the topic list above; if it doesn't, fall back to content-based matching and note the discrepancy in the reason.
+- Specificity rule: For each item extracted in step 0 (whether tagged or not), match it to the SINGLE most specific topic id in the list above, based on what that specific question was actually testing. Topics can look adjacent but are NOT interchangeable — e.g. a question about OTUCn/beyond-100G frame structure belongs ONLY to a topic id about OTUCn/Beyond-100G if one exists in the list, never to a general "OTN framing structure (OTU/ODU/OPU)" topic id, even though both involve OTN framing.
+- Detailed-over-general rule: When the list contains BOTH a general topic (e.g. [Course Curriculum Modules] Performance Monitoring) AND a more detailed topic on the same concept (e.g. [Performance Monitoring (Detailed)] Monitoring Parameters: OSNR...), ALWAYS assign the question to the MORE DETAILED topic id. Never assign to a general/curriculum-overview topic if a matching detailed topic exists in the same session list.
+- Special case: if a mistake is clearly about a narrower/specialized concept (e.g. OTUCn) but NO topic id for that specialized concept exists anywhere in the list above, you must still attach it to the closest general topic id — but in that topic's "reason" you must describe it as a mistake specific to that narrower concept (e.g. "غلطة في OTUCn تحديدًا"), not as a general weakness in the broad topic itself, since most of the broad topic may still be solid. If that same broad topic id ALSO absorbs a separate, genuinely general mistake (not tied to the narrow concept), keep the two visibly distinct in the reason (e.g. two short clauses, one flagged as OTUCn-specific and one as general) rather than merging them into a single blended description that implies they're the same kind of gap.
 
 STEP 2 — Status rubric (apply per topic id, based only on the items matched to THAT id in step 1, and — when the full quiz text is present — how many total questions from that topic id you can identify in it):
-- "weak": at least one matched item shows a genuine conceptual misunderstanding — confusing two different mechanisms, functions, or definitions — OR a skipped question on that topic with no other evidence the concept is solid — OR more than one wrong/skipped item out of very few questions on that topic.
-- "good": all matched items are the student slipping on a specific numeric or positional detail (e.g. an exact column/byte range, a specific number) while their reasoning about the general principle was right — no conceptual confusion, and it's a single isolated slip relative to how many questions on that topic they got right.
+- "weak": at least one matched item shows a genuine conceptual misunderstanding — e.g. confusing LCK with LOM (different alarms with different causes), mixing up which layer a function belongs to, or not knowing what a mechanism does at all — OR a skipped question on that topic with no other evidence the concept is solid — OR more than one wrong/skipped item out of very few questions on that topic. The key test: would fixing this require re-learning a concept, not just re-checking a number?
+- "good": ALL matched items are the student slipping on a narrow factual detail while their reasoning about the general concept was correct — e.g. writing column 14 instead of 15 for OPU overhead (knows it's in the overhead, wrong column), or mixing up the label "1+1" vs "1:1" while fully understanding how protection switching works. The key test: would a quick re-read of a table fix this, without needing to re-learn the concept?
 - If a topic id has multiple matched items of different severity, the status is "weak" (conceptual/skip issues dominate), but the reason must still name each distinct item separately rather than blending them into one vague description — do not describe a numeric slip as "conceptual" just because it shares a topic id with a real conceptual error.
 - "mastered": at least one question you can point to in the raw quiz text belongs to this topic AND none of those questions were wrong or skipped — i.e. you have positive evidence, not just absence of evidence.
 - If a topic id has no items matched to it in step 1, first check (only when the raw quiz text is present) whether you can identify ANY question in that text that actually tests this topic at all:
@@ -4479,7 +4488,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           s.wrongNums || "",
           s.skippedNums || "",
         );
-        const model = cfg.model || "gemini-3.5-flash";
+        const model = cfg.model || "gemini-2.0-flash";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
         try {
@@ -4489,7 +4498,13 @@ Include every topic id from the list exactly once, and no ids that aren't in the
               "Content-Type": "application/json",
               "x-goog-api-key": cfg.apiKey,
             },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0,
+                responseMimeType: "application/json",
+              },
+            }),
           });
 
           if (resp.status === 429) {
@@ -4518,7 +4533,14 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           const textOut =
             (((data.candidates || [])[0] || {}).content || {}).parts?.[0]
               ?.text || "";
-          const parsed = extractJson(textOut);
+          // Try direct parse first (when responseMimeType:"application/json" is honoured),
+          // fall back to regex-based extractJson for older cached responses.
+          let parsed = null;
+          try {
+            parsed = textOut ? JSON.parse(textOut) : null;
+          } catch (e) {
+            parsed = extractJson(textOut);
+          }
           if (!parsed || !Array.isArray(parsed.ratings)) {
             s.aiState = "error";
             s.aiError = "الرد من Gemini مكنش JSON صالح، جرب تاني.";
@@ -4580,7 +4602,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
         const cfg = getGeminiConfig();
         document.getElementById("geminiKeyInput").value = cfg.apiKey || "";
         document.getElementById("geminiModelInput").value =
-          cfg.model || "gemini-3.5-flash";
+          cfg.model || "gemini-2.0-flash";
         document.getElementById("geminiStatusText").textContent = cfg.apiKey
           ? "✅ فيه مفتاح متسجل"
           : "مفيش مفتاح لسه";
@@ -4589,7 +4611,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
         const apiKey = document.getElementById("geminiKeyInput").value.trim();
         const model =
           document.getElementById("geminiModelInput").value.trim() ||
-          "gemini-3.5-flash";
+          "gemini-2.0-flash";
         saveGeminiConfig({ apiKey, model });
         document.getElementById("geminiStatusText").textContent = apiKey
           ? "✅ اتحفظ"
@@ -4603,7 +4625,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
             apiKey: "",
             model:
               document.getElementById("geminiModelInput").value.trim() ||
-              "gemini-3.5-flash",
+              "gemini-2.0-flash",
           });
           document.getElementById("geminiKeyInput").value = "";
           document.getElementById("geminiStatusText").textContent = "اتمسح";
@@ -4615,7 +4637,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           const apiKey = document.getElementById("geminiKeyInput").value.trim();
           const model =
             document.getElementById("geminiModelInput").value.trim() ||
-            "gemini-3.5-flash";
+            "gemini-2.0-flash";
           if (!apiKey) {
             flashToast("⚠️ اكتب المفتاح الأول");
             return;
