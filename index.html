@@ -1678,7 +1678,7 @@
           ],
           [
             "OTN Principles",
-            "OTN framing structure (OTU, ODU, OPU)",
+            "OTN framing structure (OTU, ODU, OPU) — sizes, rows/columns, which section a byte physically sits in",
             "هيكل وتأطير OTN الأساسي",
             "good",
             "غلطة واحدة بس في موقع OPU overhead (columns 15-16) — تفصيلة رقمية، راجع خريطة الأعمدة مرة",
@@ -1692,7 +1692,7 @@
           ],
           [
             "OTN Principles",
-            "OTUk/ODUk Overhead Functions",
+            "OTUk/ODUk Overhead Functions — what a byte actively does: its purpose, the alarm/defect it signals",
             "وظائف كل بايت في الـ overhead",
             "weak",
             "لخبطة بين MFAS byte abnormality والـ alarm الصح (BDI بدل LOM) — راجع ربط كل byte بالـ alarm بتاعه",
@@ -4320,20 +4320,21 @@
             : "Medium (تشخيص أول مرة)";
           const suggestedCount = Math.min(20, Math.max(5, topics.length * 3));
           const topicNames = arabicJoin(topics.map((t) => t.topic));
-          const topicTagList = topics
-            .map((t) => `  - id:"${t.id}" → ${t.topic}`)
-            .join("\n");
-          const promptLine =
-            `من ملف ${fileName} بس، ركّز على ${topicNames}.` +
-            `\n\nمهم: بعد كل سؤال وقبل السؤال اللي بعده، اكتب على سطر منفصل:` +
-            `\n[topic: <id>]` +
-            `\nحيث <id> هو الـ id الأنسب للسؤال من القايمة دي بالظبط (لا تختار id مش موجود فيها):\n${topicTagList}`;
+          // Just the topic-focus sentence — this is the one thing NotebookLM
+          // Studio's Quiz tool actually reads from free text. Difficulty and
+          // question count have their own dedicated controls in Studio (the
+          // caret ">" next to the Quiz tile) — pasting sentences about them
+          // here does nothing, so we show them as a separate hint instead of
+          // baking them into the copyable prompt.
+          const promptLine = `من ملف ${fileName} بس، ركّز على ${topicNames}.`;
           combinedParts.push(
-            `📌 ${meta.label} (${topics.length} موضوع)\nDifficulty المقترح: ${suggestedDiff} | عدد الأسئلة المقترح: ${suggestedCount}\n${promptLine}`,
+            `📌 ${meta.label} (${topics.length} موضوع)\n${promptLine}`,
           );
+          const suggestionHint = `💡 اختار يدوي من الإعدادات (الـ "˅" جنب Quiz في Studio): Difficulty ≈ ${suggestedDiff.split(" ")[0]}، عدد الأسئلة ≈ ${suggestedCount} — النص مبيقراش الرقمين دول لو مكتوبين جوه البرومبت.`;
           groupsHtml += `<div class="group-strip" data-block="${src}">
       <div class="group-strip-top"><span class="group-meta">📌 ${meta.label} — ${topics.length} موضوع</span><button class="btn small" data-save-session="${src}">💾 احفظ كجلسة (بعد الكويز)</button></div>
       <input class="file-edit" data-file-input="${src}" value="${escapeAttr(fileName)}" placeholder="اسم الملف">
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">${escapeHtml(suggestionHint)}</div>
     </div>`;
         });
         const combinedText = combinedParts.join("\n\n");
