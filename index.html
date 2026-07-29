@@ -688,6 +688,41 @@
         text-align: center;
         margin-top: 2px;
       }
+      .topic-pct-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 3px;
+      }
+      .topic-pct-bar-wrap {
+        flex: 1;
+        height: 4px;
+        background: var(--border);
+        border-radius: 99px;
+        overflow: hidden;
+        min-width: 40px;
+      }
+      .topic-pct-bar {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.35s ease;
+      }
+      .topic-pct-bar.not_started { background: var(--not-started); }
+      .topic-pct-bar.weak        { background: var(--weak); }
+      .topic-pct-bar.good        { background: var(--good); }
+      .topic-pct-bar.mastered    { background: var(--mastered); }
+      .topic-pct-label {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        min-width: 30px;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .topic-pct-label.not_started { color: var(--not-started); }
+      .topic-pct-label.weak        { color: var(--weak); }
+      .topic-pct-label.good        { color: var(--good); }
+      .topic-pct-label.mastered    { color: var(--mastered); }
 
       .edit-form input[type="text"],
       .edit-form textarea {
@@ -2511,6 +2546,7 @@
         mastered: "Mastered",
       };
       const STATUS_ORDER = ["not_started", "weak", "good", "mastered"];
+      const STATUS_PCT = { not_started: 0, weak: 33, good: 67, mastered: 100 };
       const REVIEW_OVERDUE_DAYS = 14;
       const REVIEW_SOON_DAYS = 7;
 
@@ -2857,6 +2893,36 @@
         return appState.topics[id];
       }
 
+      /**
+       * Compute mastery percentage for a topic.
+       * Uses all sessions that covered this topic and had an AI analysis.
+       * Score per session: mastered=100, good=67, weak=33, not_started/missing=0.
+       * Falls back to STATUS_PCT[currentStatus] if no session history.
+       */
+      function topicMasteryPct(topicId) {
+        const STATUS_SCORE = { mastered: 100, good: 67, weak: 33, not_started: 0 };
+        const sessions = (appState.sessions || []).filter(
+          (s) =>
+            Array.isArray(s.topicIds) &&
+            s.topicIds.includes(topicId) &&
+            s.aiAnalysis &&
+            Array.isArray(s.aiAnalysis.ratings),
+        );
+        if (!sessions.length) {
+          const st = ensureTopicState(topicId);
+          return STATUS_PCT[st.status] ?? 0;
+        }
+        const scores = sessions.map((s) => {
+          const r = s.aiAnalysis.ratings.find((x) => x.id === topicId);
+          return r ? (STATUS_SCORE[r.status] ?? 0) : null;
+        }).filter((v) => v !== null);
+        if (!scores.length) {
+          const st = ensureTopicState(topicId);
+          return STATUS_PCT[st.status] ?? 0;
+        }
+        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      }
+
       /* =====================================================================
    TABS
 ===================================================================== */
@@ -3167,6 +3233,12 @@
     </div>
     <div class="status-col">
       <div class="status-buttons" data-id="${t.id}">${STATUS_ORDER.map((s) => `<button class="status-btn sel-${s} ${st.status === s ? "active" : ""}" data-id="${t.id}" data-status="${s}">${STATUS_LABEL[s]}</button>`).join("")}</div>
+      <div class="topic-pct-row">
+        <div class="topic-pct-bar-wrap">
+          <div class="topic-pct-bar ${st.status}" style="width:${topicMasteryPct(t.id)}%"></div>
+        </div>
+        <span class="topic-pct-label ${st.status}">${topicMasteryPct(t.id)}%</span>
+      </div>
       <div class="last-rev">${st.lastReviewed ? "📅 " + st.lastReviewed : "—"}</div>
     </div>
   </div>`;
