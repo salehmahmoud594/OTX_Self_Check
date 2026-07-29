@@ -3403,7 +3403,7 @@
               if (!t) return;
               linkedHtml += `<div class="ai-rating-row">
           <div><div style="font-size:12.5px;"><span class="src-badge">${SOURCE_META[t.src].short}</span>${escapeHtml(t.topic)}</div><div class="ai-reason">${escapeHtml(r.reason || "")}</div></div>
-          <div style="display:flex; align-items:center; gap:8px;"><span class="src-badge" style="color:var(--good); background:var(--good-dim);">${STATUS_LABEL[r.status] || r.status}</span><button class="btn small" data-apply-single-ai="${s.id}" data-tid="${r.id}" data-status="${r.status}">تطبيق</button></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span class="src-badge" style="color:var(--good); background:var(--good-dim);">${STATUS_LABEL[r.status] || r.status}</span><button class="btn small" data-apply-single-ai="${s.id}" data-tid="${r.id}" data-status="${r.status}" data-reason="${escapeAttr(r.reason || "")}" data-date="${escapeAttr(s.date || "")}">تطبيق</button></div>
         </div>`;
             });
           } else {
@@ -3678,7 +3678,17 @@
               (x) => x.id === btn.dataset.applyAi,
             );
             if (!s || !s.aiAnalysis) return;
-            s.aiAnalysis.ratings.forEach((r) => setTopicStatus(r.id, r.status));
+            s.aiAnalysis.ratings.forEach((r) => {
+              setTopicStatus(r.id, r.status);
+              if (r.reason) {
+                const st = ensureTopicState(r.id);
+                const prefix = `[🧠 ${s.date || "AI"}] `;
+                const line = prefix + r.reason;
+                st.note = st.note
+                  ? st.note + "\n" + line
+                  : line;
+              }
+            });
             saveState(true);
             render();
           });
@@ -3686,6 +3696,14 @@
         document.querySelectorAll("[data-apply-single-ai]").forEach((btn) => {
           btn.addEventListener("click", () => {
             setTopicStatus(btn.dataset.tid, btn.dataset.status);
+            if (btn.dataset.reason) {
+              const st = ensureTopicState(btn.dataset.tid);
+              const prefix = `[🧠 ${btn.dataset.date || "AI"}] `;
+              const line = prefix + btn.dataset.reason;
+              st.note = st.note
+                ? st.note + "\n" + line
+                : line;
+            }
             saveState(true);
             render();
           });
