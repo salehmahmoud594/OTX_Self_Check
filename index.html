@@ -707,10 +707,18 @@
         border-radius: 99px;
         transition: width 0.35s ease;
       }
-      .topic-pct-bar.not_started { background: var(--not-started); }
-      .topic-pct-bar.weak        { background: var(--weak); }
-      .topic-pct-bar.good        { background: var(--good); }
-      .topic-pct-bar.mastered    { background: var(--mastered); }
+      .topic-pct-bar.not_started {
+        background: var(--not-started);
+      }
+      .topic-pct-bar.weak {
+        background: var(--weak);
+      }
+      .topic-pct-bar.good {
+        background: var(--good);
+      }
+      .topic-pct-bar.mastered {
+        background: var(--mastered);
+      }
       .topic-pct-label {
         font-family: var(--mono);
         font-size: 9.5px;
@@ -719,10 +727,18 @@
         text-align: right;
         white-space: nowrap;
       }
-      .topic-pct-label.not_started { color: var(--not-started); }
-      .topic-pct-label.weak        { color: var(--weak); }
-      .topic-pct-label.good        { color: var(--good); }
-      .topic-pct-label.mastered    { color: var(--mastered); }
+      .topic-pct-label.not_started {
+        color: var(--not-started);
+      }
+      .topic-pct-label.weak {
+        color: var(--weak);
+      }
+      .topic-pct-label.good {
+        color: var(--good);
+      }
+      .topic-pct-label.mastered {
+        color: var(--mastered);
+      }
 
       .edit-form input[type="text"],
       .edit-form textarea {
@@ -2935,10 +2951,12 @@
           const st = ensureTopicState(topicId);
           return STATUS_PCT[st.status] ?? 0;
         }
-        const scores = sessions.map((s) => {
-          const r = s.aiAnalysis.ratings.find((x) => x.id === topicId);
-          return r ? (STATUS_PCT[r.status] ?? 0) : null;
-        }).filter((v) => v !== null);
+        const scores = sessions
+          .map((s) => {
+            const r = s.aiAnalysis.ratings.find((x) => x.id === topicId);
+            return r ? (STATUS_PCT[r.status] ?? 0) : null;
+          })
+          .filter((v) => v !== null);
         if (!scores.length) {
           const st = ensureTopicState(topicId);
           return STATUS_PCT[st.status] ?? 0;
@@ -4750,7 +4768,8 @@ Include every topic id from the list exactly once, and no ids that aren't in the
             cleanRatings.push({
               id,
               status: (t && t.curStatus) || "not_started",
-              reason: "الـ AI ماردش على الموضوع ده، اتسابت الحالة القديمة زي ما هي.",
+              reason:
+                "الـ AI ماردش على الموضوع ده، اتسابت الحالة القديمة زي ما هي.",
             });
           });
           s.aiState = "done";
