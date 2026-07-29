@@ -1533,16 +1533,27 @@
       <div id="geminiPanel" class="gemini-panel">
         <div class="gemini-panel-inner">
           <label>Gemini API Key</label>
-          <input
-            type="password"
-            id="geminiKeyInput"
-            placeholder="الصق الـ API key هنا (بيتحفظ في متصفحك بس، مش في النسخة الاحتياطية)"
-          />
+          <div style="display: flex; gap: 6px; align-items: center">
+            <input
+              type="password"
+              id="geminiKeyInput"
+              placeholder="الصق الـ API key هنا (بيتحفظ بشكل مُعتّم في متصفحك بس، مش في النسخة الاحتياطية)"
+              style="flex: 1"
+            />
+            <button
+              class="icon-btn"
+              type="button"
+              id="geminiKeyToggle"
+              title="اظهار/اخفاء"
+            >
+              👁
+            </button>
+          </div>
           <label>Model</label>
           <input
             type="text"
             id="geminiModelInput"
-            placeholder="gemini-2.0-flash"
+            placeholder="gemini-3.6-flash"
           />
           <div class="edit-form-actions">
             <button class="btn small primary" id="geminiSaveBtn">✔ حفظ</button>
@@ -2547,6 +2558,19 @@
       };
       const STATUS_ORDER = ["not_started", "weak", "good", "mastered"];
       const STATUS_PCT = { not_started: 0, weak: 33, good: 67, mastered: 100 };
+      /**
+       * Maps a mastery percentage back to a status bucket, purely for coloring
+       * the progress bar. Kept separate from the topic's manually-set `status`
+       * so the bar's color always agrees with its own width (a topic that's
+       * currently "mastered" but has a middling historical average will show
+       * as an in-progress color, not a full green bar sitting at 60%).
+       */
+      function pctToStatusClass(pct) {
+        if (pct >= 90) return "mastered";
+        if (pct >= 60) return "good";
+        if (pct >= 30) return "weak";
+        return "not_started";
+      }
       const REVIEW_OVERDUE_DAYS = 14;
       const REVIEW_SOON_DAYS = 7;
 
@@ -2900,7 +2924,6 @@
        * Falls back to STATUS_PCT[currentStatus] if no session history.
        */
       function topicMasteryPct(topicId) {
-        const STATUS_SCORE = { mastered: 100, good: 67, weak: 33, not_started: 0 };
         const sessions = (appState.sessions || []).filter(
           (s) =>
             Array.isArray(s.topicIds) &&
@@ -2914,7 +2937,7 @@
         }
         const scores = sessions.map((s) => {
           const r = s.aiAnalysis.ratings.find((x) => x.id === topicId);
-          return r ? (STATUS_SCORE[r.status] ?? 0) : null;
+          return r ? (STATUS_PCT[r.status] ?? 0) : null;
         }).filter((v) => v !== null);
         if (!scores.length) {
           const st = ensureTopicState(topicId);
@@ -3193,6 +3216,8 @@
       function renderRow(t, showSrcBadge, overdueDays) {
         const st = ensureTopicState(t.id);
         const isSel = selected.has(t.id);
+        const pct = topicMasteryPct(t.id);
+        const pctClass = pctToStatusClass(pct);
 
         if (editingId === t.id) {
           return `<div class="topic-row" id="row-${t.id}">
@@ -3235,9 +3260,9 @@
       <div class="status-buttons" data-id="${t.id}">${STATUS_ORDER.map((s) => `<button class="status-btn sel-${s} ${st.status === s ? "active" : ""}" data-id="${t.id}" data-status="${s}">${STATUS_LABEL[s]}</button>`).join("")}</div>
       <div class="topic-pct-row">
         <div class="topic-pct-bar-wrap">
-          <div class="topic-pct-bar ${st.status}" style="width:${topicMasteryPct(t.id)}%"></div>
+          <div class="topic-pct-bar ${pctClass}" style="width:${pct}%"></div>
         </div>
-        <span class="topic-pct-label ${st.status}">${topicMasteryPct(t.id)}%</span>
+        <span class="topic-pct-label ${pctClass}">${pct}%</span>
       </div>
       <div class="last-rev">${st.lastReviewed ? "📅 " + st.lastReviewed : "—"}</div>
     </div>
@@ -3398,6 +3423,9 @@
         <span style="font-size:11.5px; color:var(--accent);">🧠 تحليل Gemini جاهز</span>
         <div style="display:flex; gap:8px;"><button class="btn small primary" data-apply-ai="${s.id}">✅ طبّق كل اقتراحات AI</button><button class="btn small" data-ai-analyze="${s.id}">🔄 حلل تاني</button></div>
       </div>`;
+            if (s.aiError) {
+              linkedHtml += `<div style="font-size:11px; color:var(--weak); margin-bottom:8px;">⚠️ ${escapeHtml(s.aiError)}</div>`;
+            }
             s.aiAnalysis.ratings.forEach((r) => {
               const t = LIVE.byId[r.id];
               if (!t) return;
@@ -3684,9 +3712,9 @@
                 const st = ensureTopicState(r.id);
                 const prefix = `[🧠 ${s.date || "AI"}] `;
                 const line = prefix + r.reason;
-                st.note = st.note
-                  ? st.note + "\n" + line
-                  : line;
+                if (!st.note || !st.note.includes(line)) {
+                  st.note = st.note ? st.note + "\n" + line : line;
+                }
               }
             });
             saveState(true);
@@ -3700,9 +3728,9 @@
               const st = ensureTopicState(btn.dataset.tid);
               const prefix = `[🧠 ${btn.dataset.date || "AI"}] `;
               const line = prefix + btn.dataset.reason;
-              st.note = st.note
-                ? st.note + "\n" + line
-                : line;
+              if (!st.note || !st.note.includes(line)) {
+                st.note = st.note ? st.note + "\n" + line : line;
+              }
             }
             saveState(true);
             render();
@@ -4439,16 +4467,52 @@
    localStorage key only, so it is never included in your JSON backups.
 ===================================================================== */
       const GEMINI_CFG_KEY = "otx_gemini_cfg_v1";
+      /**
+       * IMPORTANT: this is obfuscation, not encryption. There is no server here
+       * to hold a real secret — this whole app is one static HTML file the
+       * browser can read, so the "key" used to reverse this is sitting right
+       * here in the same file anyone can open. All this does is stop the API
+       * key from being an instantly-readable plaintext string if someone
+       * glances at localStorage in devtools; it will not stop someone who
+       * actually reads this source. Real protection = restrict the key itself
+       * (quota/referrer limits in Google AI Studio), not client-side hiding.
+       */
+      function _obf(str) {
+        try {
+          return (
+            "obf1:" +
+            btoa(unescape(encodeURIComponent(str)).split("").reverse().join(""))
+          );
+        } catch (e) {
+          return str;
+        }
+      }
+      function _deobf(str) {
+        if (typeof str !== "string" || !str.startsWith("obf1:")) return str; // legacy plaintext, pass through
+        try {
+          return decodeURIComponent(
+            escape(atob(str.slice(5)).split("").reverse().join("")),
+          );
+        } catch (e) {
+          return "";
+        }
+      }
       function getGeminiConfig() {
         try {
           const raw = localStorage.getItem(GEMINI_CFG_KEY);
-          if (raw) return JSON.parse(raw);
+          if (raw) {
+            const cfg = JSON.parse(raw);
+            return { ...cfg, apiKey: _deobf(cfg.apiKey || "") };
+          }
         } catch (e) {}
-        return { apiKey: "", model: "gemini-2.0-flash" };
+        return { apiKey: "", model: "gemini-3.6-flash" };
       }
       function saveGeminiConfig(cfg) {
         try {
-          localStorage.setItem(GEMINI_CFG_KEY, JSON.stringify(cfg));
+          localStorage.setItem(
+            GEMINI_CFG_KEY,
+            JSON.stringify({ ...cfg, apiKey: _obf(cfg.apiKey || "") }),
+          );
           return true;
         } catch (e) {
           return false;
@@ -4465,7 +4529,10 @@
         skippedNums,
       ) {
         const topicLines = topics
-          .map((t) => `- id:"${t.id}" | [${t.cat}] ${t.topic}`)
+          .map(
+            (t) =>
+              `- id:"${t.id}" | [${t.cat}] ${t.topic} | current_status:${t.curStatus || "not_started"}`,
+          )
           .join("\n");
         const hasRaw = !!(rawText && rawText.trim());
         const skippedCount = (Number(total) || 0) - (Number(correct) || 0);
@@ -4487,7 +4554,7 @@ IMPORTANT — the student sometimes second-guesses their own question numbering 
 
         return `You are helping a student self-assess their knowledge after a quiz on optical transmission engineering (Huawei HCIA/HCIP + optical courses).
 
-They were quizzed on exactly these topics (this is the COMPLETE and ONLY valid list of topic ids — do not invent new ones, do not merge two of them together, do not add a topic id that isn't in this list even if the quiz content suggests one):
+They were quizzed on exactly these topics (this is the COMPLETE and ONLY valid list of topic ids — do not invent new ones, do not merge two of them together, do not add a topic id that isn't in this list even if the quiz content suggests one). Each line also shows "current_status": the student's last saved mastery level for that topic BEFORE this quiz — use it only as instructed in STEP 2 below, never as a hint to bias a topic that WAS tested in this quiz:
 ${topicLines}
 
 Score: ${correct} out of ${total} correct (so ${skippedCount >= 0 ? skippedCount : "an unknown number of"} question(s) were wrong or skipped in total).
@@ -4519,11 +4586,12 @@ STEP 2 — Status rubric (apply per topic id, based only on the items matched to
 - "mastered": at least one question you can point to in the raw quiz text belongs to this topic AND none of those questions were wrong or skipped — i.e. you have positive evidence, not just absence of evidence.
 - If a topic id has no items matched to it in step 1, first check (only when the raw quiz text is present) whether you can identify ANY question in that text that actually tests this topic at all:
   - If you CAN identify at least one such question and it was answered correctly: status is "mastered", and the reason should reference the actual question number(s) that confirm it — never say "all questions" or "every question" if you're only pointing to one.
-  - If you CANNOT identify any question testing this topic in the quiz (it simply wasn't covered by this particular quiz): status defaults to "good", and the reason MUST say explicitly that this quiz didn't specifically test this topic and the rating is unverified/carried over, not evidence of mastery. NEVER phrase this as "answered correctly" or "mastered" or imply questions were answered when none existed — that is a fabrication.
-  - If no raw quiz text is present at all (notes-only mode), infer from the overall score: default to "good" unless the score is low enough that widespread weakness is more likely, and say in the reason that this is score-based inference, not a specific identified mistake.
+  - If you CANNOT identify any question testing this topic in the quiz (it simply wasn't covered by this particular quiz): status MUST be exactly that topic's given "current_status" value, copied unchanged (including "not_started" if that's what it is) — never guess "good" or any other value as a default. The reason MUST say explicitly that this quiz didn't specifically test this topic and the status is carried over unchanged, not evidence from this quiz. NEVER phrase this as "answered correctly" or imply questions were answered when none existed — that is a fabrication.
+  - If no raw quiz text is present at all (notes-only mode) and a topic has no matched items, status MUST also be exactly that topic's given "current_status", copied unchanged, with the same "carried over, not tested this time" reason — do not infer a different status from the overall score for topics that weren't specifically flagged as wrong/skipped.
 
 Respond with ONLY raw JSON (no markdown fences, no commentary), in this exact shape:
-{"ratings":[{"id":"<topic id from the list above>","status":"weak|good|mastered","reason":"one short sentence in Arabic, under 18 words, naming the exact question number(s) and mistake(s) when available, using only terms grounded in step 0 — never a term you're inferring or guessing"}]}
+{"ratings":[{"id":"<topic id from the list above>","status":"weak|good|mastered|not_started","reason":"one short sentence in Arabic, under 18 words, naming the exact question number(s) and mistake(s) when available, using only terms grounded in step 0 — never a term you're inferring or guessing"}]}
+"not_started" is only valid when it's the exact carried-over current_status of a topic this quiz didn't test (per STEP 2) — never assign it to a topic that WAS tested.
 
 Include every topic id from the list exactly once, and no ids that aren't in the list. Nothing else in your response.`;
       }
@@ -4553,7 +4621,8 @@ Include every topic id from the list exactly once, and no ids that aren't in the
         const LIVE = window.__LIVE || buildLive();
         const topics = (s.topicIds || [])
           .map((id) => LIVE.byId[id])
-          .filter(Boolean);
+          .filter(Boolean)
+          .map((t) => ({ ...t, curStatus: ensureTopicState(t.id).status }));
         if (!topics.length) {
           flashToast("⚠️ الجلسة دي مش مربوطة بمواضيع محددة");
           return;
@@ -4579,8 +4648,31 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           s.wrongNums || "",
           s.skippedNums || "",
         );
-        const model = cfg.model || "gemini-2.0-flash";
+        const model = cfg.model || "gemini-3.6-flash";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+        const responseSchema = {
+          type: "object",
+          properties: {
+            ratings: {
+              type: "array",
+              minItems: topics.length,
+              maxItems: topics.length,
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string", enum: topics.map((t) => t.id) },
+                  status: {
+                    type: "string",
+                    enum: ["weak", "good", "mastered", "not_started"],
+                  },
+                  reason: { type: "string" },
+                },
+                required: ["id", "status", "reason"],
+              },
+            },
+          },
+          required: ["ratings"],
+        };
 
         try {
           const resp = await fetch(url, {
@@ -4594,6 +4686,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
               generationConfig: {
                 temperature: 0,
                 responseMimeType: "application/json",
+                responseSchema: responseSchema,
               },
             }),
           });
@@ -4638,9 +4731,32 @@ Include every topic id from the list exactly once, and no ids that aren't in the
             render();
             return;
           }
+          const requestedIds = new Set(topics.map((t) => t.id));
+          const seen = new Set();
+          const cleanRatings = [];
+          parsed.ratings.forEach((r) => {
+            if (!r || !requestedIds.has(r.id) || seen.has(r.id)) return;
+            if (!["weak", "good", "mastered", "not_started"].includes(r.status))
+              return;
+            seen.add(r.id);
+            cleanRatings.push(r);
+          });
+          const missingIds = topics
+            .map((t) => t.id)
+            .filter((id) => !seen.has(id));
+          missingIds.forEach((id) => {
+            const t = topics.find((x) => x.id === id);
+            cleanRatings.push({
+              id,
+              status: (t && t.curStatus) || "not_started",
+              reason: "الـ AI ماردش على الموضوع ده، اتسابت الحالة القديمة زي ما هي.",
+            });
+          });
           s.aiState = "done";
-          s.aiError = "";
-          s.aiAnalysis = { ratings: parsed.ratings, analyzedAt: Date.now() };
+          s.aiError = missingIds.length
+            ? `تنبيه: ${missingIds.length} موضوع مكنش في رد الـ AI، اتسابوا بحالتهم القديمة.`
+            : "";
+          s.aiAnalysis = { ratings: cleanRatings, analyzedAt: Date.now() };
           saveState(true);
           render();
         } catch (err) {
@@ -4689,11 +4805,20 @@ Include every topic id from the list exactly once, and no ids that aren't in the
       document
         .getElementById("geminiSettingsBtn")
         .addEventListener("click", () => toggleGeminiPanel());
+      document
+        .getElementById("geminiKeyToggle")
+        .addEventListener("click", () => {
+          const inp = document.getElementById("geminiKeyInput");
+          const btn = document.getElementById("geminiKeyToggle");
+          const showing = inp.type === "text";
+          inp.type = showing ? "password" : "text";
+          btn.textContent = showing ? "👁" : "🙈";
+        });
       (function initGeminiInputs() {
         const cfg = getGeminiConfig();
         document.getElementById("geminiKeyInput").value = cfg.apiKey || "";
         document.getElementById("geminiModelInput").value =
-          cfg.model || "gemini-2.0-flash";
+          cfg.model || "gemini-3.6-flash";
         document.getElementById("geminiStatusText").textContent = cfg.apiKey
           ? "✅ فيه مفتاح متسجل"
           : "مفيش مفتاح لسه";
@@ -4702,7 +4827,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
         const apiKey = document.getElementById("geminiKeyInput").value.trim();
         const model =
           document.getElementById("geminiModelInput").value.trim() ||
-          "gemini-2.0-flash";
+          "gemini-3.6-flash";
         saveGeminiConfig({ apiKey, model });
         document.getElementById("geminiStatusText").textContent = apiKey
           ? "✅ اتحفظ"
@@ -4716,7 +4841,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
             apiKey: "",
             model:
               document.getElementById("geminiModelInput").value.trim() ||
-              "gemini-2.0-flash",
+              "gemini-3.6-flash",
           });
           document.getElementById("geminiKeyInput").value = "";
           document.getElementById("geminiStatusText").textContent = "اتمسح";
@@ -4728,7 +4853,7 @@ Include every topic id from the list exactly once, and no ids that aren't in the
           const apiKey = document.getElementById("geminiKeyInput").value.trim();
           const model =
             document.getElementById("geminiModelInput").value.trim() ||
-            "gemini-2.0-flash";
+            "gemini-3.6-flash";
           if (!apiKey) {
             flashToast("⚠️ اكتب المفتاح الأول");
             return;
